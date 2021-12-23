@@ -124,23 +124,24 @@ while True:
   # convert the frame from BGR to RGB for dlib
   rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
   
-# check to see if the frame dimensions are not set
-if W is None or H is None:
-  # set the frame dimensions and instantiate our direction
-  # counter
-  (H, W) = frame.shape[:2]
-  dc = DirectionCounter(args["mode"], H, W)
+  # check to see if the frame dimensions are not set
+  if W is None or H is None:
+    # set the frame dimensions and instantiate our direction
+    # counter
+    (H, W) = frame.shape[:2]
+    dc = DirectionCounter(args["mode"], H, W)
 
-# begin writing the video to disk if required
-if args["output"] is not None and writerProcess is None:
-  # set the value of the write flag (used to communicate when
-  # to stop the process)
-  writeVideo = Value('i', 1)
+  # begin writing the video to disk if required
+  if args["output"] is not None and writerProcess is None:
+    # set the value of the write flag (used to communicate when
+    # to stop the process)
+    writeVideo = Value('i', 1)
 
-  # initialize a frame queue and start the video writer
-  frameQueue = Queue()
-  writerProcess = Process(target=write_video, args=(
-    args["output"], writeVideo, frameQueue, W, H))
-  writerProcess.start()
+    # initialize a frame queue and start the video writer
+    frameQueue = Queue()
+    writerProcess = Process(target=write_video, args=(
+      args["output"], writeVideo, frameQueue, W, H))
+    writerProcess.start()
+
 
 

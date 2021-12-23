@@ -1,3 +1,6 @@
 ImageClassification/models/** filter=lfs diff=lfs merge=lfs -text
 ImageClassification/models/googlenetv4/**/* filter=lfs diff=lfs merge=lfs -text
 ImageClassification/models/squeeze/**/* filter=lfs diff=lfs merge=lfs -text
+OpenPose/*.mp4 filter=lfs diff=lfs merge=lfs -text
+OpenPose/*.avi filter=lfs diff=lfs merge=lfs -text
+OpenPose/Pose/**/* filter=lfs diff=lfs merge=lfs -text

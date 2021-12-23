@@ -143,5 +143,43 @@ while True:
       args["output"], writeVideo, frameQueue, W, H))
     writerProcess.start()
 
+  # initialize the current status along with our list of bounding
+  # box rectangles returned by either (1) our object detector or
+  # (2) the correlation trackers
+  status = "Waiting"
+  rects = []
 
+  # check to see if we should run a more computationally expensive
+  # object detection method to aid our tracker
+  if totalFrames % conf["skip_frames"] == 0:
+    # set the status and initialize our new set of object
+    # trackers
+    status = "Detecting"
+    trackers = []
 
+  # convert the frame to a blob and pass the blob through the
+
+  # network and obtain the detections
+  blob = cv2.dnn.blobFromImage(frame, size=(300, 300),
+  ddepth=cv2.CV_8U)
+  net.setInput(blob, scalefactor=1.0/127.5, mean=[127.5,
+  127.5, 127.5])
+  detections = net.forward()
+  
+# loop over the detections
+  for i in np.arange(0, detections.shape[2]):
+
+  # extract the confidence (i.e., probability) associated
+  # with the prediction
+  confidence = detections[0, 0, i, 2]
+
+  # filter out weak detections by requiring a minimum
+  # confidence
+  if confidence > conf["confidence"]:
+    # extract the index of the class label from the
+    # detections list
+    idx = int(detections[0, 0, i, 1])
+
+    # if the class label is not a person, ignore it
+    if CLASSES[idx] != "person":
+      continue

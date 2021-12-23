@@ -1,0 +1,44 @@
+{
+	// paths to the model files
+	"model_paths": {
+		"ir": {
+			"squeezenet": {
+				"xml": "models/squeezenet/ir/squeezenet1.1.xml",
+				"bin": "models/squeezenet/ir/squeezenet1.1.bin"
+			},
+			"googlenet": {
+				"xml": "models/googlenetv4/ir/googlenet-v4.xml",
+				"bin": "models/googlenetv4/ir/googlenet-v4.bin"
+			}
+		},
+		"caffe": {
+			"squeezenet": {
+				"prototxt": "models/squeezenet/caffe/squeezenet1.1.prototxt",
+				"caffemodel": "models/squeezenet/caffe/squeezenet1.1.caffemodel"
+			},
+			"googlenet": {
+				"prototxt": "models/googlenetv4/caffe/googlenet-v4.prototxt",
+				"caffemodel": "models/googlenetv4/caffe/googlenet-v4.caffemodel"
+			}
+		}
+	},
+
+	// preprocessing instructions for each model
+	"preprocess": {
+		"squeezenet":
+		{
+			"input_size": [227, 227],
+			"mean": [104.0, 117.0, 123.0],
+			"scale": 1.0
+		},
+		"googlenet":
+		{
+			"input_size": [299, 299],
+			"mean": 128.0,
+			"scale": 128.0
+		}
+	},
+
+	// path to the imagenet labels file
+	"labels_path": "imagenet_classes.pickle"
+}

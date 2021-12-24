@@ -1,9 +1,9 @@
 # USAGE
-# python classify_cpu.py --conf config/config.json --model squeezenet --image images/beer.png
-# python classify_cpu.py --conf config/config.json --model googlenet --image images/brown_bear.png
+# python3 classify_cpu.py --conf config/config.json --model squeezenet --image images/beer.png
+# python3 classify_cpu.py --conf config/config.json --model googlenet --image images/brown_bear.png
 
 # import the necessary packages
-from pyimagesearch.utils import Conf
+from conf import Conf
 import numpy as np
 import argparse
 import pickle

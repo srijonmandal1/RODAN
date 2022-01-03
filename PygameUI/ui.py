@@ -24,7 +24,7 @@ runUi = True
 # 1 - green
 # 2 - yellow
 # 3 - red
-alert_level = 1
+alert_level = 0
 medium_font = pygame.font.Font(font_path, 27)
 large_font = pygame.font.Font(font_path, 35)
 alert = ""
@@ -59,9 +59,10 @@ def show_alert(text: str, sound_alert: str, sound: bool = False):
     if alert_level > 1 or sound:
         text_to_speech.parallel(sound_alert)
 
-alert_level = 2
+alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
 while runUi:
+    print(time.time())
     pygame.display.update()
     screen.fill(green if alert_level == 1
                 else yellow if alert_level == 2

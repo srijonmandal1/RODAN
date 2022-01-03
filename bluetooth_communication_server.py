@@ -1,6 +1,7 @@
 import socket
+import json
 
-hostMACAddress = '4C:1D:96:A4:F8:7A' # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
+hostMACAddress = '4C:1D:96:A4:F8:7A'  # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
 port = 5
 backlog = 1
 size = 1024
@@ -12,9 +13,10 @@ try:
     while 1:
         data = client.recv(size)
         if data:
-            print(data)
-            client.send(data)
-except:	
-    print("Closing socket")	
+            data = json.loads(data)
+            print(f"Event: {data['event']}, Time: {data['time']}")
+            # client.send(data)
+except:
+    print("Closing socket")
     client.close()
     s.close()

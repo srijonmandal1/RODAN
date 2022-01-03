@@ -1,0 +1,11 @@
+{
+	// paths to the MobileNet + SDD object detector
+	"prototxt_path": "mobilenet_ssd/MobileNetSSD_deploy.prototxt",
+	"model_path": "mobilenet_ssd/MobileNetSSD_deploy.caffemodel",
+
+	// minimum probability to filter out weak detections
+	"confidence": 0.4,
+
+	// number of frames to skip between detections
+	"skip_frames": 30
+}

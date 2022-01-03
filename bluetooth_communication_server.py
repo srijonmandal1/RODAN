@@ -10,13 +10,14 @@ s.bind((hostMACAddress, port))
 s.listen(backlog)
 try:
     client, address = s.accept()
-    while 1:
+    while True:
         data = client.recv(size)
         if data:
             data = json.loads(data)
             print(f"Event: {data['event']}, Time: {data['time']}")
             # client.send(data)
-except:
+except Exception as e:
+    print(e)
     print("Closing socket")
     client.close()
     s.close()

@@ -10,7 +10,7 @@ import text_to_speech
 pygame.init()
 
 
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
@@ -21,11 +21,12 @@ font_path = "Segoe-UI-Variable-Static-Display.ttf"
 pygame.display.update()
 
 runUi = True
-# 0 - green
-# 1 - yellow
-# 2 - red
-alert_level = 0
+# 1 - green
+# 2 - yellow
+# 3 - red
+alert_level = 1
 medium_font = pygame.font.Font(font_path, 27)
+large_font = pygame.font.Font(font_path, 35)
 alert = ""
 time_since_alert = None
 
@@ -42,26 +43,24 @@ quit_button = DefaultButton(screen, 10, 10, 100, 50,
 def show_alert_always(text: str):
     global alert, time_since_alert
     if text:
-        label = medium_font.render(text, 1, (0, 0, 0))
+        label = large_font.render(text, 1, (0, 0, 0))
         width, height = label.get_size()
         screen_width, screen_height = screen.get_size()
-        screen.blit(screen, (screen_width / 2 - width / 2, screen_height / 2 - height / 2))
+        screen.blit(label, (screen_width / 2 - width / 2, screen_height / 2 - height / 2))
         if time.time() - time_since_alert > 10:
             alert = ""
             time_since_alert = None
 
 
-def show_alert(text: str, sound_alert: str):
+def show_alert(text: str, sound_alert: str, sound: bool = False):
     global alert, time_since_alert
     alert = text
     time_since_alert = time.time()
-    if alert_level > 1:
+    if alert_level > 1 or sound:
         text_to_speech.parallel(sound_alert)
-        print(1)
-
 
 alert_level = 2
-show_alert("Hi", "Bye hi hi hi")
+show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
 while runUi:
     pygame.display.update()
     screen.fill(green if alert_level == 1

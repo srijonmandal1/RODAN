@@ -3,7 +3,8 @@ import threading
 
 def change_voice(engine, language="english"):
     for voice in engine.getProperty('voices'):
-        if language == voice.id:
+        # if language == voice.id:
+        if voice.name == "english_wmids":
             engine.setProperty('voice', voice.id)
             return True
 
@@ -12,6 +13,10 @@ def change_voice(engine, language="english"):
 
 def textToSpeech(text, rate=150):
     engine = pyttsx3.init()
+    for voice in engine.getProperty("voices"):
+        print(f"Lang: {voice.languages}")
+        print(f"Gender: {voice.gender}")
+        print(f"Name: {voice.name}")
     engine.setProperty('volume', 1)
     change_voice(engine)
     engine.setProperty('rate', rate)
@@ -21,6 +26,4 @@ def textToSpeech(text, rate=150):
 
 
 def parallel(text):
-    print(32)
     threading.Thread(target=textToSpeech, args=(text,)).start()
-    textToSpeech(text)

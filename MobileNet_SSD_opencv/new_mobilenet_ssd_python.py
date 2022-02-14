@@ -37,6 +37,9 @@ if args.video:
 else:
     cap = cv2.VideoCapture(0)
 
+with open("log.txt", "w") as f:
+    pass
+
 # Load the Caffe model
 net = cv2.dnn.readNetFromCaffe(args.prototxt, args.weights)
 

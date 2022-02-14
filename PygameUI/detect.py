@@ -12,8 +12,6 @@ parser.add_argument("--thr", default=0.2, type=float,
                     help="confidence threshold to filter out weak detections")
 args = parser.parse_args()
 
-with open("log.txt", "w") as f:
-    pass
 
 # Labels of Network.
 classNames = {0: "background",
@@ -30,7 +28,7 @@ else:
     cap = cv2.VideoCapture(0)
 
 # Load the Caffe model
-net = cv2.dnn.readNetFromCaffe("models/MobileNetSSD_deploy.prototxt", 
+net = cv2.dnn.readNetFromCaffe("models/MobileNetSSD_deploy.prototxt",
                                "models/MobileNetSSD_deploy.caffemodel")
 
 x = y = 0
@@ -97,5 +95,7 @@ while True:
                         with open("log.txt", "w") as f:
                             for line in lines:
                                 print(line.strip(), file=f)
+
+    cv2.imshow("frame", frame)
 
     y = x

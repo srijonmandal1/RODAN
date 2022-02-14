@@ -1,4 +1,3 @@
-import threading
 import pygame
 from pygame.locals import *
 from pygame_classes import *
@@ -10,7 +9,8 @@ import text_to_speech
 pygame.init()
 
 
-screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((320, 480))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
@@ -33,6 +33,8 @@ time_since_alert = None
 
 def runUiFalse():
     global runUi
+    for process in text_to_speech.text_to_speech_processes:
+        process.terminate()
     runUi = False
 
 
@@ -61,8 +63,10 @@ def show_alert(text: str, sound_alert: str, sound: bool = False):
 
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
+x = 0
 while runUi:
-    print(time.time())
+    x += 1
+    print(x)
     pygame.display.update()
     screen.fill(green if alert_level == 1
                 else yellow if alert_level == 2
@@ -70,12 +74,17 @@ while runUi:
     quit_button.draw()
     show_alert_always(alert)
     for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        print(x, 1, event.type, pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONDOWN)
+        if event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.MOUSEBUTTONUP:
+            print(x, 2)
             pos = event.pos
+            print(pos)
             quit_button.check_click(*pos)
-        elif event.type == pygame.FINGERDOWN:
+        elif event.type == pygame.FINGERDOWN or event.type == pygame.FINGERUP:
             pos = (event.x * screen.get_width(), event.y * screen.get_height())
             quit_button.check_click(*pos)
         elif event.type == pygame.KEYDOWN:
             if event.key == K_q:
                 runUi = False
+
+                

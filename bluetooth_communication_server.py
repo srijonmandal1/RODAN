@@ -15,7 +15,6 @@ try:
         if data:
             data = json.loads(data)
             print(f"Event: {data['event']}, Time: {data['time']}")
-            # client.send(data)
 except Exception as e:
     print(e)
     print("Closing socket")

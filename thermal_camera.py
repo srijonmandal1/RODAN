@@ -37,7 +37,7 @@ try:
 
         np_array = numpy.array(nested_frame).astype('uint8')
         grayImage = cv2.resize(cv2.cvtColor(np_array, cv2.COLOR_GRAY2BGR), dsize=(320, 240))
-        cv2.imshow("Image", grayImage)
+        cv2.imshow("Thermal Camera", grayImage)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break

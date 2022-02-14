@@ -10,7 +10,7 @@ parser.add_argument("--video_file", default="vid.mp4", help="Input Video")
 
 args = parser.parse_args()
 
-MODE = "MPI"
+MODE = "COCO"
 
 if MODE is "COCO":
     # protoFile = "pose/coco/pose_deploy_linevec.prototxt"

@@ -5,9 +5,7 @@ from flask_session import Session
 from flask_pymongo import PyMongo
 from flask_minify import minify
 import rcssmin
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
+
 
 load_dotenv()
 
@@ -27,7 +25,6 @@ def minify_css(css_map):
 
 mongo = PyMongo(app)
 Session(app)
-
 
 
 @app.route('/')

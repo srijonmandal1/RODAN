@@ -27,11 +27,16 @@ mongo = PyMongo(app)
 Session(app)
 
 
-@app.route('/')
+@app.route("/")
 def about():
-    return render_template('index.html')
+    return render_template("index.html")
 
 
-if __name__ == '__main__':
+@app.route("/api/v1/get-events")
+def get_events():
+    return list(mongo.db.events.find())
+
+
+if __name__ == "__main__":
     minify_css(css_map)
-    app.run(host="0.0.0.0", debug=True)
+    app.run(debug=True)

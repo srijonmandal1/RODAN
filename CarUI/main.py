@@ -1,9 +1,9 @@
 import time
 import sys
-import json
 
 import torch
 import cv2
+import screeninfo
 
 import pygame
 from pygame.locals import *
@@ -28,9 +28,12 @@ def get_classes_from_results(results):
 
 
 pygame.init()
+monitor_info = screeninfo.get_monitors()[0]
+width = monitor_info.width
+height = monitor_info.height
 
-# screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
-screen = pygame.display.set_mode((320, 480))
+# screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((width, height))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
@@ -124,6 +127,8 @@ while runUi:
         elif event.type == pygame.KEYDOWN:
             if event.key == K_q:
                 runUi = False
+    if len(events) > 200:
+        events = events[:-2]
 
 cap.release()
 sys.exit()

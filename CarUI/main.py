@@ -29,8 +29,8 @@ def get_classes_from_results(results):
 
 pygame.init()
 
-# screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
-screen = pygame.display.set_mode((320, 480))
+screen = pygame.display.set_mode((320, 480), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((320, 480))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)

@@ -32,8 +32,8 @@ monitor_info = screeninfo.get_monitors()[0]
 width = monitor_info.width
 height = monitor_info.height
 
-# screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
-screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((width, height))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)

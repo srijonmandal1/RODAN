@@ -99,7 +99,7 @@ for _ in range(10):
     _ = cap.read()
 while runUi:
     _, frame = cap.read()
-    if alert != "Drive Safe!" and not text_to_speech.text_to_speech_running:
+    if alert != "Drive Safe!" or not text_to_speech.text_to_speech_running:
         results = whitelist_keys(whitelisted_classes, get_classes_from_results(model(frame)))
     else:
         results = {}

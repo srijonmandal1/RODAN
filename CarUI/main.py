@@ -15,6 +15,11 @@ from pluralize import pluralize
 # Model
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
 
+with open("log.txt", "w") as f:
+    pass
+
+x,y = 0,0
+
 def get_classes_from_results(results):
     classes_detected = {}
     pred = results.pred[0]
@@ -129,6 +134,33 @@ while runUi:
                 runUi = False
     if len(events) > 200:
         events = events[:-2]
+
+
+    with open("log.txt", "r") as f:
+        lines = f.readlines()
+
+        past_items = [item.split(":")[0] for item in lines[-y:]]
+        if object_name not in past_items:
+            with open("log.txt", "a") as f:
+                print(f"{object_name}:{time.time()}", file=f)
+        else:
+            index_of_object = past_items.index(object_name)
+            with open("log.txt", "r") as f:
+                lines = f.readlines()
+
+            for index, line in enumerate(lines[::-1]):
+                if line.split(":")[0] == object_name:
+                    break
+
+            index = len(lines) - 1 - index
+            lines[index] = f"{object_name}:{time.time()}"
+
+            with open("log.txt", "w") as f:
+                for line in lines:
+                    print(line.strip(), file=f)
+
+    y = x
+
 
 cap.release()
 sys.exit()

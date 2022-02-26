@@ -14,11 +14,9 @@ class Button:
         self.border_color = border_color
 
     def draw(self):
-#         pygame.draw.rect(self.screen, self.color, (self.x, self.y, self.width, self.height), border_radius=self.rounded)
-        pygame.draw.rect(self.screen, self.color, (self.x, self.y, self.width, self.height), self.rounded)
+        pygame.draw.rect(self.screen, self.color, (self.x, self.y, self.width, self.height), border_radius=self.rounded)
         if self.border != 0:
-#             pygame.draw.rect(self.screen, self.border_color, (self.x, self.y, self.width, self.height), border_radius=self.rounded, width=int(self.border * 2))
-            pygame.draw.rect(self.screen, self.border_color, (self.x, self.y, self.width, self.height), self.rounded)
+            pygame.draw.rect(self.screen, self.border_color, (self.x, self.y, self.width, self.height), border_radius=self.rounded, width=int(self.border * 2))
 
     def check_click(self, x, y):
         if self.x <= x <= self.x + self.width and self.y <= y <= self.y + self.height:

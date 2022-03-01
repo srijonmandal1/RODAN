@@ -1,8 +1,10 @@
 import requests
 
-event = {
-    "num": 7,
-    "class": "person"
-}
+def adding(number,result):
+    event = {
+        "num": int(number),
+        "class": str(result)
+    }
+    requests.post("http://localhost:5000/api/v1/add-event", json=event)
 
-requests.post("http://localhost:5000/api/v1/add-event", json=event)
+adding(10,'Cow')

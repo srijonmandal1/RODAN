@@ -1,7 +1,7 @@
 import socket
 import json
 
-hostMACAddress = '4C:1D:96:A4:F8:7A'  # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
+hostMACAddress = 'e4:5f:01:5e:90:a2'  # The MAC address of a Bluetooth adapter on the server. The server might have multiple Bluetooth adapters.
 port = 5
 backlog = 1
 size = 1024

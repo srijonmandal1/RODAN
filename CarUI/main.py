@@ -1,5 +1,7 @@
 import time
 import sys
+import requests
+import argparse
 
 import torch
 import cv2
@@ -11,6 +13,11 @@ from pygame_classes import *
 
 import text_to_speech
 from pluralize import pluralize
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--source", help="the source of the video", default="0")
+
+args = parser.parse_args()
 
 # Model
 model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
@@ -94,11 +101,20 @@ whitelisted_classes = [
 ]
 events = []
 
-cap = cv2.VideoCapture(0)
-for _ in range(10):
-    _ = cap.read()
+if args.source == "0":
+    cap = cv2.VideoCapture(0)
+    for _ in range(10):
+        _ = cap.read()
+else:
+    print(f"Loading video from {args.source}")
+    cap = cv2.VideoCapture(args.source)
 while runUi:
-    _, frame = cap.read()
+    ret, frame = cap.read()
+    if not ret:
+        if args.source == "0":
+            continue
+        else:
+            runUi = False
     if alert != "Drive Safe!" or not text_to_speech.text_to_speech_running:
         results = whitelist_keys(whitelisted_classes, get_classes_from_results(model(frame)))
     else:

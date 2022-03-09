@@ -1,7 +1,8 @@
 import time
 import sys
-import requests
 import argparse
+import queue
+import threading
 
 import torch
 import cv2
@@ -14,13 +15,50 @@ from pygame_classes import *
 import text_to_speech
 from pluralize import pluralize
 
+
+class VideoCapture:
+    def __init__(self, name):
+        self.cap = cv2.VideoCapture(name)
+        self.stop = False
+        self.q = queue.Queue()
+        t = threading.Thread(target=self._reader)
+        t.daemon = True
+        t.start()
+
+    # read frames as soon as they are available, keeping only most recent one
+    def _reader(self):
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                break
+            if not self.q.empty():
+                try:
+                    self.q.get_nowait()  # discard previous (unprocessed) frame
+                except queue.Empty:
+                    pass
+            self.q.put(frame)
+            if self.stop:
+                break
+
+    def read(self):
+        return self.q.get()
+
+    def release(self):
+        self.stop = True
+        time.sleep(0.1)
+        self.cap.release()
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", help="the source of the video", default="0")
 
 args = parser.parse_args()
 
 # Model
-model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
+# model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
+model = torch.hub.load('../../yolov5', 'custom', path='yolov5s.pt', source='local')
+lisa_dataset = torch.hub.load('../../yolov5', 'custom', path='../weights/best.pt', source='local')
+
 
 def get_classes_from_results(results):
     classes_detected = {}
@@ -39,8 +77,8 @@ monitor_info = screeninfo.get_monitors()[0]
 width = monitor_info.width
 height = monitor_info.height
 
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-# screen = pygame.display.set_mode((width, height))
+# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((width, height))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
@@ -83,8 +121,13 @@ def show_alert_always(text: str):
             time_since_alert = None
 
 
-def whitelist_keys(whitelisted, dict):
-    return {key: value for key, value in dict.items() if key in whitelisted}
+def whitelist_keys(whitelisted, detected):
+    # return {key: value for key, value in detected.items() if key in whitelisted}
+    new_detected = {key: value for key, value in detected.items() if key in whitelisted}
+    for key, value in detected.items():
+        if key not in new_detected:
+            print(f"{value} {key} have not been whitelisted")
+    return new_detected
 
 
 def show_alert(text: str, sound_alert: str, sound: bool = False):
@@ -94,29 +137,81 @@ def show_alert(text: str, sound_alert: str, sound: bool = False):
         time_since_alert = time.time()
         text_to_speech.parallel(sound_alert)
 
+
+def find_events(events, results):
+    audio_message = ""
+    msg = ""
+    print(results)
+    for detected, number in results.items():
+        # note
+        # if detected == "traffic light":
+        #       find the bounding box
+        #       then in cropped image, get color of image
+        #       alert if red, warning if yellow, and if green do nothing
+
+        print(events[-1])
+
+        if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
+            if number == 1:
+                audio_message += f"A {detected} is in front of you. "
+                msg += f"A {detected} is in front of you. "
+            else:
+                audio_message += f"{number} {pluralize(detected)} are in front of you. "
+                msg += f"{number} {pluralize(detected)} are in front of you. "
+    if msg:
+        print(msg)
+        show_alert(msg, audio_message, True)
+
+
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
+
 whitelisted_classes = [
-    'person', 'bicycle', 'car', 'motorcycle', 'bus', 'train', 'truck',
+    'person', 'bicycle', 'car', 'motorcycle', 'bus', 'train', 'truck', 'traffic light', 'stop sign',
+
+    'addedLane', 'curveLeft', 'curveRight', 'dip', 'doNotEnter', 'doNotPass',
+    'intersection', 'keepRight', 'laneEnds', 'merge', 'noLeftTurn',
+    'noRightTurn', 'pedestrianCrossing', 'rampSpeedAdvisory20',
+    'rampSpeedAdvisory35', 'rampSpeedAdvisory40', 'rampSpeedAdvisory45',
+    'rampSpeedAdvisory50', 'rampSpeedAdvisoryUrdbl', 'rightLaneMustTurn',
+    'roundabout', 'school', 'schoolSpeedLimit25', 'signalAhead', 'slow',
+    'speedLimit15', 'speedLimit25', 'speedLimit30', 'speedLimit35',
+    'speedLimit40', 'speedLimit45', 'speedLimit50', 'speedLimit55',
+    'speedLimit65', 'speedLimitUrdbl', 'stop', 'stopAhead', 'thruMergeLeft',
+    'thruMergeRight', 'thruTrafficMergeLeft', 'truckSpeedLimit55', 'turnLeft',
+    'turnRight', 'yield', 'yieldAhead', 'zoneAhead25', 'zoneAhead45'
 ]
+
 events = []
 
-if args.source == "0":
-    cap = cv2.VideoCapture(0)
+if args.source.isnumeric():
+    print(f"Using camera {int(args.source)}")
+    cap = VideoCapture(int(args.source))
+    # Get 10 frames from the camera to warn it up
     for _ in range(10):
-        _ = cap.read()
+        cap.read()
 else:
     print(f"Loading video from {args.source}")
     cap = cv2.VideoCapture(args.source)
 while runUi:
-    ret, frame = cap.read()
-    if not ret:
-        if args.source == "0":
-            continue
-        else:
+    if args.source.isnumeric():
+        frame = cap.read()
+    else:
+        ret, frame = cap.read()
+        if not ret:
             runUi = False
+    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    cv2.imshow('Video Stream', gray_frame)
+    cv2.waitKey(1)
+
     if alert != "Drive Safe!" or not text_to_speech.text_to_speech_running:
-        results = whitelist_keys(whitelisted_classes, get_classes_from_results(model(frame)))
+        results = whitelist_keys(
+            whitelisted_classes, {
+                **get_classes_from_results(model(frame)),
+                **get_classes_from_results(lisa_dataset(gray_frame))
+            }
+        )
     else:
         results = {}
     events.append(results)
@@ -127,12 +222,9 @@ while runUi:
                 else red)
     quit_button.draw()
     show_alert_always(alert)
-    for detected, number in results.items():
-        if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
-            if number == 1:
-                show_alert(f"A {detected} is in front of you", f"A {detected} is in front of you", True)
-            else:
-                show_alert(f"{number} {pluralize(detected)} are in front of you", f"{number} {pluralize(detected)} are in front of you", True)
+
+    find_events(events, results)
+
     for event in pygame.event.get():
         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
             pos = event.pos

@@ -11,7 +11,7 @@ parser.add_argument("--image_file", default="single.jpeg", help="Input image")
 args = parser.parse_args()
 
 
-MODE = "COCO"
+MODE = "MPI"
 
 if MODE is "COCO":
     # protoFile = "pose/coco/pose_deploy_linevec.prototxt"

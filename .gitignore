@@ -1,6 +1,9 @@
 OpenPose/
 models/
+weights/
 *.mp4
+*.MOV
+CarUI/vids/
 *.pt
 
 # Byte-compiled / optimized / DLL files

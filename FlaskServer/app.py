@@ -4,7 +4,6 @@ import time
 from flask import *
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
-import add_event
 
 load_dotenv()
 
@@ -25,9 +24,9 @@ def examples():
     return render_template("examples.html")
 
 
-@app.route("/page")
+@app.route("/logs")
 def page():
-    return render_template("page.html")
+    return render_template("logs.html")
 
 
 @app.route("/buy")
@@ -43,9 +42,12 @@ def contact():
 @app.route("/api/v1/add-event", methods=["POST"])
 def add_events():
     event = request.json
-    event["time"] = time.time()
+    if "event" in event and "count" in event:
+        events = {"event": event["event"], "count": event["count"], "time": time.time()}
+    else:
+        return {"success": False, }
     mongo.db.events.insert_one(event)
-    return "hello"
+    return {"success": True}
 
 
 @app.route("/api/v1/get-events")

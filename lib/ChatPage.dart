@@ -1,17 +1,15 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 class ChatPage extends StatefulWidget {
+  const ChatPage({Key? key, required this.server}) : super(key: key);
+  
   final BluetoothDevice server;
 
-  const ChatPage({required this.server});
-
   @override
-  _ChatPage createState() => new _ChatPage();
+  _ChatPage createState() => _ChatPage();
 }
 
 class _Message {
@@ -22,15 +20,14 @@ class _Message {
 }
 
 class _ChatPage extends State<ChatPage> {
-  static final clientID = 0;
+  static const clientID = 0;
   BluetoothConnection? connection;
 
   List<_Message> messages = List<_Message>.empty(growable: true);
   String _messageBuffer = '';
 
-  final TextEditingController textEditingController =
-      new TextEditingController();
-  final ScrollController listScrollController = new ScrollController();
+  final TextEditingController textEditingController = TextEditingController();
+  final ScrollController listScrollController = ScrollController();
 
   bool isConnecting = true;
   bool get isConnected => (connection?.isConnected ?? false);
@@ -56,12 +53,8 @@ class _ChatPage extends State<ChatPage> {
         // `dispose`, `finish` or `close`, which all causes to disconnect.
         // If we except the disconnection, `onDone` should be fired as result.
         // If we didn't except this (no flag set), it means closing by remote.
-        if (isDisconnecting) {
-          print('Disconnecting locally!');
-        } else {
-          print('Disconnected remotely!');
-        }
-        if (this.mounted) {
+        print('Disconnecting ${isDisconnecting ? "locally": "remotely"}!');
+        if (mounted) {
           setState(() {});
         }
       });
@@ -90,9 +83,9 @@ class _ChatPage extends State<ChatPage> {
         children: [
           Container(
             child: Text(_message.text.trim(),
-                style: TextStyle(color: Colors.white)),
-            padding: EdgeInsets.all(12.0),
-            margin: EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
+                style: const TextStyle(color: Colors.white)),
+            padding: const EdgeInsets.all(12.0),
+            margin: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
             width: 222.0,
             decoration: BoxDecoration(
                 color:
@@ -107,7 +100,7 @@ class _ChatPage extends State<ChatPage> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Transmitting Info to the Server')),
+      appBar: AppBar(title: const Text('Transmitting Info to the Server')),
       body: SafeArea(
         child: Column(
           children: [
@@ -127,11 +120,11 @@ class _ChatPage extends State<ChatPage> {
   void _onDataReceived(Uint8List data) {
     // Allocate buffer for parsed data
     int backspacesCounter = 0;
-    data.forEach((byte) {
+    for (var byte in data) {
       if (byte == 8 || byte == 127) {
         backspacesCounter++;
       }
-    });
+    }
     Uint8List buffer = Uint8List(data.length - backspacesCounter);
     int bufferIndex = buffer.length;
 

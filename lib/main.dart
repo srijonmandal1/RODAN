@@ -7,12 +7,14 @@ import './ChatPage.dart';
 import './SelectBondedDevicePage.dart';
 
 
-void main() => runApp(MaterialApp(home: MainPage()));
+void main() => runApp(const MaterialApp(home: MainPage()));
 
 
 class MainPage extends StatefulWidget {
+  const MainPage({Key? key});
+
   @override
-  _MainPage createState() => new _MainPage();
+  _MainPage createState() => _MainPage();
 }
 
 class _MainPage extends State<MainPage> {
@@ -37,7 +39,7 @@ class _MainPage extends State<MainPage> {
       if ((await FlutterBluetoothSerial.instance.isEnabled) ?? false) {
         return false;
       }
-      await Future.delayed(Duration(milliseconds: 0xDD));
+      await Future.delayed(const Duration(milliseconds: 0xDD));
       return true;
     }).then((_) {
       // Update the address field
@@ -76,51 +78,50 @@ class _MainPage extends State<MainPage> {
       appBar: AppBar(
         title: const Text('Flutter Bluetooth Serial'),
       ),
-      body: Container(
-        child: ListView(
-          children:  [
-            SwitchListTile(
-              title: const Text('Enable Bluetooth'), 
-              value: _bluetoothState.isEnabled,
-              onChanged: (bool value) {
-                // Do the request and update with the true value then
-                future() async {
-                  // async lambda seems to not working
-                  if (value)
-                    await FlutterBluetoothSerial.instance.requestEnable();
-                  else
-                    await FlutterBluetoothSerial.instance.requestDisable();
+      body: ListView(
+        children:  [
+          SwitchListTile(
+            title: const Text('Enable Bluetooth'), 
+            value: _bluetoothState.isEnabled,
+            onChanged: (bool value) {
+              // Do the request and update with the true value then
+              future() async {
+                // async lambda seems to not working
+                if (value) {
+                  await FlutterBluetoothSerial.instance.requestEnable();
+                } else {
+                  await FlutterBluetoothSerial.instance.requestDisable();
                 }
+              }
 
-                future().then((_) {
-                  setState(() {});
-                });
+              future().then((_) {
+                setState(() {});
+              });
+            },
+          ),
+          ListTile(
+            title: ElevatedButton(
+              child: const Text('Connect to paired device to chat'),
+              onPressed: () async {
+                final BluetoothDevice? selectedDevice =
+                    await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return const SelectBondedDevicePage(checkAvailability: false);
+                    },
+                  ),
+                );
+
+                if (selectedDevice != null) {
+                  print('Connect -> selected ' + selectedDevice.address);
+                  _startChat(context, selectedDevice);
+                } else {
+                  print('Connect -> no device selected');
+                }
               },
             ),
-            ListTile(
-              title: ElevatedButton(
-                child: const Text('Connect to paired device to chat'),
-                onPressed: () async {
-                  final BluetoothDevice? selectedDevice =
-                      await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return SelectBondedDevicePage(checkAvailability: false);
-                      },
-                    ),
-                  );
-
-                  if (selectedDevice != null) {
-                    print('Connect -> selected ' + selectedDevice.address);
-                    _startChat(context, selectedDevice);
-                  } else {
-                    print('Connect -> no device selected');
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

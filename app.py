@@ -5,7 +5,8 @@ from flask import *
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 
-load_dotenv()
+if "DYNO" not in os.environ:
+    load_dotenv()
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = os.environ["MONGO_URI"].replace("<username>", os.environ["USERNAME"]).replace("<password>", os.environ["PASSWORD"])

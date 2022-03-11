@@ -43,9 +43,12 @@ def contact():
 def add_events():
     event = request.json
     if "event" in event and "count" in event:
-        events = {"event": event["event"], "count": event["count"], "time": time.time()}
+        event = {
+            "event": event["event"], "count": event["count"],
+            "latitude": event["latitude"], "longitude": event["longitude"],
+            "time": time.time()}
     else:
-        return {"success": False, "message": 'Please provide an "event" key and a "count" key'}
+        return {"success": False, "message": 'Please provide an "event", a "count", a "latitude", and a "longitude"'}
     mongo.db.events.insert_one(event)
     return {"success": True}
 

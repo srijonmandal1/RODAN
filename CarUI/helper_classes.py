@@ -1,16 +1,10 @@
 import cv2
-import torch
-import sys
-import numpy
-import time
-import queue
 import threading
-from PIL import Image
+import queue
+import time
 
-# Model
-model = torch.hub.load('../yolov5', 'custom', path=f'weights/best.pt', source='local')
 
-class VideoCapture:
+class ThreadedVideoCapture:
     def __init__(self, name):
         self.cap = cv2.VideoCapture(name)
         self.stop = False
@@ -41,23 +35,3 @@ class VideoCapture:
         self.stop = True
         time.sleep(0.1)
         self.cap.release()
-
-cap = VideoCapture(0)
-
-for _ in range(10):
-    cap.read()
-
-while True:
-    img = cv2.cvtColor(cap.read(), cv2.COLOR_RGB2BGR)
-    grayscale_img = cv2.cvtColor(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
-
-    # Inference
-    results = model(img, size=640)  # includes NMS
-
-    results.render()
-    cv2.imshow("hi", numpy.array(Image.fromarray(results.imgs[0]).convert('RGB'))[:, :, ::-1])
-
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-cap.release()

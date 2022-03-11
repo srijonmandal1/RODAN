@@ -45,7 +45,7 @@ def add_events():
     if "event" in event and "count" in event:
         events = {"event": event["event"], "count": event["count"], "time": time.time()}
     else:
-        return {"success": False, }
+        return {"success": False, "message": 'Please provide an "event" key and a "count" key'}
     mongo.db.events.insert_one(event)
     return {"success": True}
 

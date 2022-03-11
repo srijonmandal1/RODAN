@@ -1,7 +1,6 @@
 import time
 import sys
 import argparse
-import queue
 import threading
 import json
 
@@ -16,94 +15,9 @@ from pygame_classes import *
 
 import text_to_speech
 from pluralize import pluralize
-import bluetooth
-import bluetooth_funcs
-
-bluetooth_funcs.make_discoverable()
-
-server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-server_sock.bind(("", 0))
-server_sock.listen(1)
-
-port = 0
-
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-
-bluetooth.advertise_service(
-    server_sock, "RODAN RND Data Sender",
-    service_id=uuid,
-    service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
-    profiles=[bluetooth.SERIAL_PORT_PROFILE],
-)
-
-
-events = []
-connected = threading.Event()
-wait_for_event = threading.Event()
-
-
-def get_connections():
-    print(f"Waiting for connection on RFCOMM channel {port}")
-    client_sock, client_info = server_sock.accept()
-    print(f"Accepted connection from {client_info}")
-    connected.set()
-    while True:
-        try:
-            wait_for_event.wait()
-            wait_for_event.clear()
-            for event in events:
-                data = (json.dumps(event) + "\r\n").encode()
-                print(f"sending {data}")
-                client_sock.send(data)
-        except IOError:
-            print("An IOError was raised")
-        except KeyboardInterrupt:
-            break
-
-    print("disconnected")
-
-    client_sock.close()
-    server_sock.close()
-    print("all done")
-
-
-socket_message_thread = threading.Thread(target=get_connections)
-socket_message_thread.daemon = True
-socket_message_thread.start()
-
-
-class ThreadedVideoCapture:
-    def __init__(self, name):
-        self.cap = cv2.VideoCapture(name)
-        self.stop = False
-        self.q = queue.Queue()
-        t = threading.Thread(target=self._reader)
-        t.daemon = True
-        t.start()
-
-    # read frames as soon as they are available, keeping only most recent one
-    def _reader(self):
-        while True:
-            ret, frame = self.cap.read()
-            if not ret:
-                break
-            if not self.q.empty():
-                try:
-                    self.q.get_nowait()  # discard previous (unprocessed) frame
-                except queue.Empty:
-                    pass
-            self.q.put(frame)
-            if self.stop:
-                break
-
-    def read(self):
-        return self.q.get()
-
-    def release(self):
-        self.stop = True
-        time.sleep(0.1)
-        self.cap.release()
-
+from helper_classes import ThreadedVideoCapture
+import bluetooth_server
+from whitelisted_classes import whitelisted_classes
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", help="the source of the video", default="0")
@@ -211,16 +125,16 @@ def find_events(events, results):
 
         print(events[-1])
 
-        events = []
+        bluetooth_server.events = []
         if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
-            event.append(event)
+            bluetooth_server.events.append({"event": detected, "count": number})
             if number == 1:
                 audio_message += f"A {detected} is in front of you. "
                 msg += f"A {detected} is in front of you. "
             else:
                 audio_message += f"{number} {pluralize(detected)} are in front of you. "
                 msg += f"{number} {pluralize(detected)} are in front of you. "
-        wait_for_event.set()
+        bluetooth_server.wait_for_event.set()
     if msg:
         found = True
         print(msg)
@@ -228,67 +142,9 @@ def find_events(events, results):
 
     return found
 
+
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
-
-whitelisted_classes = [
-    "person",
-    "bicycle",
-    "car",
-    "motorcycle",
-    "bus",
-    "train",
-    "truck",
-    "traffic light",
-    "stop sign",
-    "addedLane",
-    "curveLeft",
-    "curveRight",
-    "dip",
-    "doNotEnter",
-    "doNotPass",
-    "intersection",
-    "keepRight",
-    "laneEnds",
-    "merge",
-    "noLeftTurn",
-    "noRightTurn",
-    "pedestrianCrossing",
-    "rampSpeedAdvisory20",
-    "rampSpeedAdvisory35",
-    "rampSpeedAdvisory40",
-    "rampSpeedAdvisory45",
-    "rampSpeedAdvisory50",
-    "rampSpeedAdvisoryUrdbl",
-    "rightLaneMustTurn",
-    "roundabout",
-    "school",
-    "schoolSpeedLimit25",
-    "signalAhead",
-    "slow",
-    "speedLimit15",
-    "speedLimit25",
-    "speedLimit30",
-    "speedLimit35",
-    "speedLimit40",
-    "speedLimit45",
-    "speedLimit50",
-    "speedLimit55",
-    "speedLimit65",
-    "speedLimitUrdbl",
-    "stop",
-    "stopAhead",
-    "thruMergeLeft",
-    "thruMergeRight",
-    "thruTrafficMergeLeft",
-    "truckSpeedLimit55",
-    "turnLeft",
-    "turnRight",
-    "yield",
-    "yieldAhead",
-    "zoneAhead25",
-    "zoneAhead45",
-]
 
 events = []
 
@@ -320,7 +176,9 @@ def check_speed_limit(gray_frame):
         interpret_text(recognized_text)
 
 
-connected.wait()  # Wait for the phone to be connected
+bluetooth_server.connected.wait()  # Wait for the phone to be connected
+bluetooth_server.events = ["Connected"]
+bluetooth_server.wait_for_event.set()
 
 if args.source.isnumeric():
     print(f"Using camera {int(args.source)}")

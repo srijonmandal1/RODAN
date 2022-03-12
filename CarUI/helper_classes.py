@@ -29,7 +29,7 @@ class ThreadedVideoCapture:
                 break
 
     def read(self):
-        return self.q.get()
+        return True, self.q.get()
 
     def release(self):
         self.stop = True

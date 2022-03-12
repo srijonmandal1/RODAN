@@ -6,7 +6,7 @@ text_to_speech_threads = []
 text_to_speech_running = False
 
 
-def textToSpeech(text, rate=150):
+def text_to_speech(text, rate=150):
     global text_to_speech_running
     if not text_to_speech_running:
         text_to_speech_running = True
@@ -20,6 +20,6 @@ def textToSpeech(text, rate=150):
 
 
 def parallel(text):
-    thread = threading.Thread(target=textToSpeech, args=(text,), daemon=False)
+    thread = threading.Thread(target=text_to_speech, args=(text,), daemon=False)
     thread.start()
     text_to_speech_threads.append(thread)

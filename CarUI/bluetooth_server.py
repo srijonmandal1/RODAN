@@ -52,6 +52,4 @@ def get_connections():
     print("all done")
 
 
-socket_message_thread = threading.Thread(target=get_connections)
-socket_message_thread.daemon = True
-socket_message_thread.start()
+threading.Thread(target=get_connections, daemon=True).start()

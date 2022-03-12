@@ -1,8 +1,6 @@
 import time
 import sys
 import argparse
-import threading
-import json
 
 import pytesseract
 import torch
@@ -16,14 +14,14 @@ from pygame_classes import *
 import text_to_speech
 from pluralize import pluralize
 from helper_classes import ThreadedVideoCapture
-import bluetooth_server
+# import bluetooth_server
 from whitelisted_classes import whitelisted_classes
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", help="the source of the video", default="0")
+parser.add_argument("--prod", help="production or not", action="store_true")
 
 args = parser.parse_args()
-
 # Model
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
 model = torch.hub.load("../../yolov5", "custom", path="yolov5s.pt", source="local")
@@ -49,8 +47,10 @@ monitor_info = screeninfo.get_monitors()[0]
 width = monitor_info.width
 height = monitor_info.height
 
-# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-screen = pygame.display.set_mode((width, height))
+if args.prod:
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+else:
+    screen = pygame.display.set_mode((width, height))
 white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
@@ -65,7 +65,7 @@ runUi = True
 # 1 - green
 # 2 - yellow
 # 3 - red
-alert_level = 0
+alert_level = 1
 medium_font = pygame.font.Font(font_path, 27)
 large_font = pygame.font.Font(font_path, 35)
 alert = ""
@@ -80,7 +80,7 @@ def runUiFalse():
 quit_button = DefaultButton(screen, 10, 10, 100, 50, runUiFalse, medium_font, "Quit")
 
 
-def show_alert_always(text: str):
+def show_text(text: str):
     global alert, time_since_alert
     if text:
         label = large_font.render(text, 1, (0, 0, 0))
@@ -89,7 +89,7 @@ def show_alert_always(text: str):
         screen.blit(
             label, (screen_width / 2 - width / 2, screen_height / 2 - height / 2)
         )
-        if time.time() - time_since_alert > 10:
+        if time_since_alert is not None and time.time() - time_since_alert > 10:
             alert = ""
             time_since_alert = None
 
@@ -106,14 +106,15 @@ def whitelist_keys(whitelisted, detected):
 def show_alert(text: str, sound_alert: str, sound: bool = False):
     global alert, time_since_alert
     alert = text
-    if alert_level > 1 or sound:
+    if alert_level >= 1 or sound:
         time_since_alert = time.time()
+        print(sound_alert, "fadfdsasfddsaffdsa9999999999")
         text_to_speech.parallel(sound_alert)
 
 
 def find_events(events, results):
     found = False
-    audio_message = ""
+    audio_msg = ""
     msg = ""
     print(results)
     for detected, number in results.items():
@@ -125,26 +126,34 @@ def find_events(events, results):
 
         print(events[-1])
 
-        bluetooth_server.events = []
-        if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
-            bluetooth_server.events.append({"event": detected, "count": number})
-            if number == 1:
-                audio_message += f"A {detected} is in front of you. "
-                msg += f"A {detected} is in front of you. "
-            else:
-                audio_message += f"{number} {pluralize(detected)} are in front of you. "
-                msg += f"{number} {pluralize(detected)} are in front of you. "
-        bluetooth_server.wait_for_event.set()
+        this_msg, this_audio_msg = send_events_and_proccess(detected, number)
+        if this_msg is not None:
+            msg += this_msg
+            audio_msg += this_audio_msg
+
+    msg = "Car detected"
+    audio_msg = "Car detected"
+
     if msg:
         found = True
         print(msg)
-        show_alert(msg, audio_message, True)
+        show_alert(msg, audio_msg, True)
 
     return found
 
 
-alert_level = 1
-show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
+def send_events_and_proccess(detected, number):
+    to_return = (None, None)
+    # bluetooth_server.events = []
+    if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
+        # bluetooth_server.events.append({"event": detected, "count": number})
+        if number == 1:
+            to_return = (f"A {detected} is in front of you. ", f"A {detected} is in front of you. ")
+        else:
+            to_return = (f"{number} {pluralize(detected)} are in front of you. ", f"{number} {pluralize(detected)} are in front of you. ")
+    # bluetooth_server.wait_for_event.set()
+    return to_return
+
 
 events = []
 
@@ -152,7 +161,6 @@ sign_cascade = cv2.CascadeClassifier("Speed_limit_classifier.xml")
 
 
 def interpret_text(recognized_text):
-    probability = 0
     limits = ["25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75", "80"]
     recognized_text.upper()
     match = [x for x in limits if x in recognized_text]
@@ -176,9 +184,29 @@ def check_speed_limit(gray_frame):
         interpret_text(recognized_text)
 
 
-bluetooth_server.connected.wait()  # Wait for the phone to be connected
-bluetooth_server.events = ["Connected"]
-bluetooth_server.wait_for_event.set()
+# while not bluetooth_server.connected.is_set() and runUi:
+#     pygame.display.update()
+#     screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
+#     quit_button.draw()
+
+#     show_text("Waiting for the phone to be connected to RODAN")
+
+#     for event in pygame.event.get():
+#         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
+#             pos = event.pos
+#             quit_button.check_click(*pos)
+#         elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
+#             pos = (event.x * screen.get_width(), event.y * screen.get_height())
+#             quit_button.check_click(*pos)
+#         elif event.type == pygame.KEYDOWN:
+#             if event.key == K_q:
+#                 runUi = False
+
+
+# bluetooth_server.events = ["Connected"]
+# bluetooth_server.wait_for_event.set()
+alert_level = 1
+show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
 
 if args.source.isnumeric():
     print(f"Using camera {int(args.source)}")
@@ -191,15 +219,13 @@ else:
     cap = cv2.VideoCapture(args.source)
 
 while runUi:
-    if args.source.isnumeric():
-        frame = cap.read()
-    else:
-        ret, frame = cap.read()
-        if not ret:
-            runUi = False
+    ret, frame = cap.read()
+    if not args.source.isnumeric() and not ret:
+        runUi = False
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    cv2.imshow("Video Stream", gray_frame)
+    # gray_frame = cv2.resize(gray_frame,(100,100))
+    if not args.prod:
+        cv2.imshow("Video Stream", gray_frame)
     cv2.waitKey(1)
 
     if alert != "Drive Safe!" or not text_to_speech.text_to_speech_running:
@@ -217,7 +243,7 @@ while runUi:
     pygame.display.update()
     screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
     quit_button.draw()
-    show_alert_always(alert)
+    show_text(alert)
 
     item_detected = find_events(events, results)
 

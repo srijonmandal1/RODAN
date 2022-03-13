@@ -1,6 +1,5 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
   <title>RODAN - Logs</title>
   <meta name="description" content="website description" />
@@ -8,14 +7,13 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <link rel="stylesheet" type="text/css" href="../static/style/style.css" title="style" />
 </head>
-
 <body>
   <div id="main">
     <div id="header">
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="/">RO<span class="logo_colour">DAN</span></a></h1>
+          <h1><a href="/">RODAN</a></h1>
           <h2>RODAN aims to be a driver assistance system that isn't built into the car.</h2>
         </div>
       </div>
@@ -33,8 +31,15 @@
     <div id="site_content">
       <div id="content">
         <!-- insert the page content here -->
-        <h1>User's Logs</h1>
-        <p>This is a page for the user's logs. You can change this text to whatever you like.</p>
+        <h1>Logs</h1>
+        <p>This is to view all the logs. You can filter the logs down using the filters. Switch to the aggregation tab for a view of the aggregated data.</p>
+        {% for event in events %}
+            {% if event["count"] > 1 %}
+                <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["time"]) }} in </p>
+            {% else %}
+                <p>{{ event["count"] }} {{ event["event"] }}</p>
+            {% endif %}
+        {% endfor %}
       </div>
     </div>
   </div>

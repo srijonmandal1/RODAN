@@ -62,6 +62,7 @@ def add_events():
             "count": event["count"],
             "latitude": event["latitude"],
             "longitude": event["longitude"],
+            "device-id": event["device-id"],
             "time": time.time(),
         }
     else:

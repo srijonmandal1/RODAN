@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+import 'package:rodan_mobile_app/SelectBondedDevicePage.dart';
+import 'package:rodan_mobile_app/main.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key, required this.server}) : super(key: key);
@@ -16,14 +18,12 @@ class ChatPage extends StatefulWidget {
 }
 
 class _Message {
-  int whom;
   String text;
 
-  _Message(this.whom, this.text);
+  _Message(this.text);
 }
 
 class _ChatPageState extends State<ChatPage> {
-  static const clientID = 0;
   BluetoothConnection? connection;
 
   List<_Message> messages = List<_Message>.empty(growable: true);
@@ -104,13 +104,39 @@ class _ChatPageState extends State<ChatPage> {
         // If we except the disconnection, `onDone` should be fired as result.
         // If we didn't except this (no flag set), it means closing by remote.
         print('Disconnecting ${isDisconnecting ? "locally" : "remotely"}!');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  const MainPage(),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Disconnected from RODAN'),
+            duration: Duration(milliseconds: 5000),
+          ),
+        );
         if (mounted) {
           setState(() {});
         }
       });
     }).catchError((error) {
       print('Cannot connect, exception occured');
-      // print(error);
+      // Within the `FirstRoute` widget
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                const SelectBondedDevicePage(checkAvailability: false),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot connect to the device'),
+          duration: Duration(milliseconds: 5000),
+        ),
+      );
     });
   }
 
@@ -138,26 +164,17 @@ class _ChatPageState extends State<ChatPage> {
             margin: const EdgeInsets.only(bottom: 8.0, left: 8.0, right: 8.0),
             width: 222.0,
             decoration: BoxDecoration(
-                color:
-                    _message.whom == clientID ? Colors.blueAccent : Colors.grey,
-                borderRadius: BorderRadius.circular(7.0)),
+                color: Colors.grey, borderRadius: BorderRadius.circular(7.0)),
           ),
         ],
-        mainAxisAlignment: _message.whom == clientID
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
       );
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text('Transmitting Info'),
-          ],
-        ),
+        centerTitle: true,
+        title: const Text('Transmitting Info'),
       ),
       body: SafeArea(
         child: Column(
@@ -210,20 +227,13 @@ class _ChatPageState extends State<ChatPage> {
         }
         messages.add(
           _Message(
-            1,
-            backspacesCounter > 0
-                ? _messageBuffer.substring(
-                    0, _messageBuffer.length - backspacesCounter)
-                : _messageBuffer + dataString.substring(0, index),
+            _messageBuffer + dataString.substring(0, index),
           ),
         );
         _messageBuffer = dataString.substring(index);
       });
     } else {
-      _messageBuffer = (backspacesCounter > 0
-          ? _messageBuffer.substring(
-              0, _messageBuffer.length - backspacesCounter)
-          : _messageBuffer + dataString);
+      _messageBuffer = _messageBuffer + dataString;
     }
   }
 }

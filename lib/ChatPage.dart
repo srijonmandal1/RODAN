@@ -1,15 +1,18 @@
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key, required this.server}) : super(key: key);
-  
+
   final BluetoothDevice server;
 
   @override
-  _ChatPage createState() => _ChatPage();
+  _ChatPageState createState() => _ChatPageState();
 }
 
 class _Message {
@@ -19,20 +22,67 @@ class _Message {
   _Message(this.whom, this.text);
 }
 
-class _ChatPage extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> {
   static const clientID = 0;
   BluetoothConnection? connection;
 
   List<_Message> messages = List<_Message>.empty(growable: true);
   String _messageBuffer = '';
 
-  final TextEditingController textEditingController = TextEditingController();
   final ScrollController listScrollController = ScrollController();
 
   bool isConnecting = true;
   bool get isConnected => (connection?.isConnected ?? false);
 
   bool isDisconnecting = false;
+
+  Future<Position> getLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<http.Response> sendEventRequest(Map<String, dynamic> data) {
+    return http.post(
+      Uri.parse('https://rodan-das.herokuapp.com/api/v1/add-event'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(data),
+    );
+  }
+
+  Future<void> addEvent(Map<String, dynamic> eventText) async {
+    Position position = await getLocation();
+    Map<String, dynamic> data = <String, dynamic>{
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'device-id': 'RDN1',
+      ...eventText
+    };
+
+    final http.Response response = await sendEventRequest(data);
+    print(response.body);
+  }
 
   @override
   void initState() {
@@ -53,14 +103,14 @@ class _ChatPage extends State<ChatPage> {
         // `dispose`, `finish` or `close`, which all causes to disconnect.
         // If we except the disconnection, `onDone` should be fired as result.
         // If we didn't except this (no flag set), it means closing by remote.
-        print('Disconnecting ${isDisconnecting ? "locally": "remotely"}!');
+        print('Disconnecting ${isDisconnecting ? "locally" : "remotely"}!');
         if (mounted) {
           setState(() {});
         }
       });
     }).catchError((error) {
       print('Cannot connect, exception occured');
-      print(error);
+      // print(error);
     });
   }
 
@@ -100,7 +150,15 @@ class _ChatPage extends State<ChatPage> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Transmitting Info to the Server')),
+      appBar: AppBar(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text('Transmitting Info'),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -147,6 +205,9 @@ class _ChatPage extends State<ChatPage> {
     int index = buffer.indexOf(13);
     if (~index != 0) {
       setState(() {
+        if (dataString.startsWith("{")) {
+          addEvent(jsonDecode(dataString));
+        }
         messages.add(
           _Message(
             1,

@@ -1,6 +1,9 @@
+import threading
 import time
 import sys
 import argparse
+import socket
+import json
 
 import pytesseract
 import torch
@@ -14,8 +17,8 @@ from pygame_classes import *
 import text_to_speech
 from pluralize import pluralize
 from helper_classes import ThreadedVideoCapture
-# import bluetooth_server
 from whitelisted_classes import whitelisted_classes
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--source", help="the source of the video", default="0")
@@ -26,8 +29,26 @@ args = parser.parse_args()
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
 model = torch.hub.load("../../yolov5", "custom", path="yolov5s.pt", source="local")
 lisa_dataset = torch.hub.load(
-    "../../yolov5", "custom", path="../weights/best.pt", source="local"
+    "../../yolov5", "custom", path="../lisa_weights/best.pt", source="local"
 )
+# fire_dataset = torch.hub.load(
+#     "../../yolov5", "custom", path="../fire_weights/somefires.pt", source="local"
+# )
+
+HOST = 'localhost'
+PORT = 6011
+
+communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+communication_socket.connect((HOST, PORT))
+
+
+def wait_for_first_communication():
+    global phone_connected
+    communication_socket.recv(1024)
+    phone_connected = True
+
+
+threading.Thread(target=wait_for_first_communication).start()
 
 
 def get_classes_from_results(results):
@@ -108,7 +129,6 @@ def show_alert(text: str, sound_alert: str, sound: bool = False):
     alert = text
     if alert_level >= 1 or sound:
         time_since_alert = time.time()
-        print(sound_alert, "fadfdsasfddsaffdsa9999999999")
         text_to_speech.parallel(sound_alert)
 
 
@@ -126,13 +146,33 @@ def find_events(events, results):
 
         print(events[-1])
 
-        this_msg, this_audio_msg = send_events_and_proccess(detected, number)
+        send_to_bluetooth = True
+
+        if detected == "person":
+            detected = "pedestrian"
+
+        if number > 5 and detected != "pedestrian":
+            detected = "heavy traffic"
+            number = 1
+
+        if detected == "stop":
+            detected = "stop sign"
+
+        # Work in progress: To not bombard the phone with unnecessary events
+        # if detected in ["car","person","pedestrian","stop","stop sign","bicycle"]:
+        #     send_to_bluetooth = False
+
+        this_msg, this_audio_msg = send_events_and_process(detected, number, send_to_bluetooth)
+        if detected == "stop sign":
+            this_msg = this_audio_msg = "Remember to slow down!"
+        if detected == "heavy traffic":
+            this_msg = this_audio_msg = "Heavy traffic seems to be building ahead. Slow Down!"
+        if detected == "pedestrian" or "pedestrianCrossing":
+            this_msg = this_audio_msg = "Watch out! Pedestrians may be crossing."
+
         if this_msg is not None:
             msg += this_msg
             audio_msg += this_audio_msg
-
-    msg = "Car detected"
-    audio_msg = "Car detected"
 
     if msg:
         found = True
@@ -142,16 +182,18 @@ def find_events(events, results):
     return found
 
 
-def send_events_and_proccess(detected, number):
+def send_events_and_process(detected, number, send_to_bluetooth=True):
     to_return = (None, None)
-    # bluetooth_server.events = []
+    event_to_send_to_process = []
     if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
-        # bluetooth_server.events.append({"event": detected, "count": number})
+        event_to_send_to_process.append({"event": detected, "count": number})
         if number == 1:
-            to_return = (f"A {detected} is in front of you. ", f"A {detected} is in front of you. ")
+            to_return = (f"A {detected} is ahead. ", f"A {detected} is ahead.")
         else:
-            to_return = (f"{number} {pluralize(detected)} are in front of you. ", f"{number} {pluralize(detected)} are in front of you. ")
-    # bluetooth_server.wait_for_event.set()
+            to_return = (f"{number} {pluralize(detected)} are ahead. ", f"{number} {pluralize(detected)} are ahead.")
+    if send_to_bluetooth:
+        communication_socket.send(json.dumps(event_to_send_to_process).encode())
+
     return to_return
 
 
@@ -165,7 +207,9 @@ def interpret_text(recognized_text):
     recognized_text.upper()
     match = [x for x in limits if x in recognized_text]
     if match:
+        match = match[0]
         events.append(match)
+        send_events_and_process(f"{match} mph speed zone", 1)
         show_alert(
             f"The speed limit is {match} mph.", f"Slow down to {match} mph.", True
         )
@@ -176,7 +220,7 @@ def check_speed_limit(gray_frame):
     signs = sign_cascade.detectMultiScale(gray_frame)
     for (x, y, w, h) in signs:
         # img = cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-        roi_gray = gray_frame[y : y + h, x : x + w]
+        roi_gray = gray_frame[y: y + h, x: x + w]
 
         recognized_text = pytesseract.image_to_string(
             roi_gray, config="-c tessedit_char_whitelist=0123456789 --psm 6"
@@ -184,27 +228,27 @@ def check_speed_limit(gray_frame):
         interpret_text(recognized_text)
 
 
-# while not bluetooth_server.connected.is_set() and runUi:
-#     pygame.display.update()
-#     screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
-#     quit_button.draw()
+phone_connected = False
 
-#     show_text("Waiting for the phone to be connected to RODAN")
+show_alert("Waiting for the phone to be connected to RODAN", "Please connect your phone to Row Dan")
+while not phone_connected and runUi:
+    pygame.display.update()
+    screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
+    quit_button.draw()
 
-#     for event in pygame.event.get():
-#         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
-#             pos = event.pos
-#             quit_button.check_click(*pos)
-#         elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
-#             pos = (event.x * screen.get_width(), event.y * screen.get_height())
-#             quit_button.check_click(*pos)
-#         elif event.type == pygame.KEYDOWN:
-#             if event.key == K_q:
-#                 runUi = False
+    show_text("Waiting for the phone to be connected to RODAN")
 
+    for event in pygame.event.get():
+        if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
+            pos = event.pos
+            quit_button.check_click(*pos)
+        elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
+            pos = (event.x * screen.get_width(), event.y * screen.get_height())
+            quit_button.check_click(*pos)
+        elif event.type == pygame.KEYDOWN:
+            if event.key == K_q:
+                runUi = False
 
-# bluetooth_server.events = ["Connected"]
-# bluetooth_server.wait_for_event.set()
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
 
@@ -223,7 +267,6 @@ while runUi:
     if not args.source.isnumeric() and not ret:
         runUi = False
     gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # gray_frame = cv2.resize(gray_frame,(100,100))
     if not args.prod:
         cv2.imshow("Video Stream", gray_frame)
     cv2.waitKey(1)
@@ -234,6 +277,7 @@ while runUi:
             {
                 **get_classes_from_results(model(frame)),
                 **get_classes_from_results(lisa_dataset(gray_frame)),
+                # **get_classes_from_results(fire_dataset(frame)),
             },
         )
     else:

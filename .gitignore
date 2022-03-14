@@ -1,10 +1,12 @@
 OpenPose/
 models/
 weights/
+fire_weights/
 *.mp4
 *.MOV
 CarUI/vids/
 *.pt
+.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

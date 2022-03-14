@@ -8,7 +8,7 @@ import threading
 from PIL import Image
 
 # Model
-model = torch.hub.load('../yolov5', 'custom', path=f'weights/best.pt', source='local')
+model = torch.hub.load('../yolov5', 'custom', path='lisa_weights/best.pt', source='local')
 
 class VideoCapture:
     def __init__(self, name):
@@ -55,7 +55,11 @@ while True:
     results = model(img, size=640)  # includes NMS
 
     results.render()
-    cv2.imshow("hi", numpy.array(Image.fromarray(results.imgs[0]).convert('RGB'))[:, :, ::-1])
+    # some_img = numpy.array(Image.fromarray(results.imgs[0]).convert('RGB'))[:, :, ::-1]
+    # some_img = cv2.resize(some_img,(400,400))
+    # cv2.imshow("hi", some_img)
+
+    cv2.imshow('Vid',numpy.array(Image.fromarray(results.imgs[0]).convert('RGB'))[:, :, ::-1])
 
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break

@@ -1,4 +1,5 @@
 whitelisted_classes = [
+    "fire",
     "person",
     "bicycle",
     "car",

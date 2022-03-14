@@ -1,27 +1,13 @@
-import bluetooth
-import bluetooth_funcs
 import json
 import socket
+import time
+import requests
 
 HOST = "0.0.0.0"
 PORT = 6011
 
-bluetooth_funcs.make_discoverable()
-
-server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-server_sock.bind(("", 0))
-server_sock.listen(1)
-
-port = 0
-
-uuid = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
-
-bluetooth.advertise_service(
-    server_sock, "RODAN RND Data Sender",
-    service_id=uuid,
-    service_classes=[uuid, bluetooth.SERIAL_PORT_CLASS],
-    profiles=[bluetooth.SERIAL_PORT_PROFILE],
-)
+SERVER_URL = "https://rodan-das.herokuapp.com/api/v1/add-event"
+SERVER_URL = "http://localhost:5000/api/v1/add-event"
 
 
 def get_connections():
@@ -30,9 +16,7 @@ def get_connections():
         s.listen(1)
         conn, addr = s.accept()
         print("Connected by", addr)
-        print(f"Waiting for connection on RFCOMM channel {port}")
-        client_sock, client_info = server_sock.accept()
-        print(f"Accepted connection from {client_info}")
+        time.sleep(1)
         conn.send(b"Connected")
         with conn:
             while True:
@@ -44,7 +28,12 @@ def get_connections():
                             print(event)
                             data = (json.dumps(event) + "\r\n").encode()
                             print(f"sending {data}")
-                            client_sock.send(data)
+                            requests.post(SERVER_URL, json={
+                                **data,
+                                "device-id": "RND1",
+                                "latitude": 37.6604,
+                                "longitude": -121.8758
+                            })
                     except json.JSONDecodeError:
                         print(f"Unable to decode {received}")
                 except IOError:
@@ -54,8 +43,6 @@ def get_connections():
 
     print("disconnected")
 
-    client_sock.close()
-    server_sock.close()
     print("all done")
 
 

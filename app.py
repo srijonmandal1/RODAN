@@ -1,12 +1,17 @@
 import os
 import time
 import datetime
+from datetime import date
 
 from flask import *
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
+from geopy.geocoders import Nominatim
 
 from pluralize import pluralize
+
+
+geolocator = Nominatim(user_agent="RODAN")
 
 if "DYNO" not in os.environ:
     load_dotenv()
@@ -18,19 +23,20 @@ app.config["MONGO_URI"] = (
     .replace("<password>", os.environ["PASSWORD"])
 )
 
-
 mongo = PyMongo(app)
 
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    agg_result = mongo.db.events.aggregate(
+    [{ "$group" : {"_id" : "$date"}}
+    ])
+    return render_template("home.html", agg_result=agg_result)
 
 
 @app.route("/examples")
 def examples():
     return render_template("examples.html")
-
 
 @app.route("/logs")
 def logs():
@@ -51,19 +57,21 @@ def contact():
 def add_events():
     event = request.json
     if (
-        "event" in event
+        "device-id" in event
+        and "event" in event
         and "count" in event
         and "latitude" in event
         and "longitude" in event
-        and "device-id" in event
     ):
         event = {
+            "device-id": event["device-id"],
             "event": event["event"],
             "count": event["count"],
             "latitude": event["latitude"],
             "longitude": event["longitude"],
-            "device-id": event["device-id"],
             "time": time.time(),
+            "date": str(date.today()),
+            "city": reverse_geocode(event["latitude"], event["longitude"], raw=True)[2]
         }
     else:
         return {
@@ -90,9 +98,21 @@ def pluralize_jinja():
 def format_date():
     return dict(
         format_date=lambda time: datetime.datetime.fromtimestamp(time).strftime(
-            "%-I:%-M %m/%d/%Y"
+            "%-I:%M %-m/%d/%Y"
         )
     )
+
+
+def reverse_geocode(latitude, longitude, raw=False):
+    address = geolocator.reverse(f"{latitude}, {longitude}").address.split(", ")
+    if raw:
+        return address
+    return f"{address[2]}, {address[4]} {address[5]}"
+
+
+@app.context_processor
+def reverse_geocode_jinja_func():
+    return dict(reverse_geocode=reverse_geocode)
 
 
 if __name__ == "__main__":

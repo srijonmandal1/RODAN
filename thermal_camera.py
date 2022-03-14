@@ -44,4 +44,5 @@ try:
 except KeyboardInterrupt:
     pass
 
+# cv2.imwrite('thermalimg.png',grayImage)
 cv2.destroyAllWindows()

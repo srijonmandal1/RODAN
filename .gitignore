@@ -1,3 +1,6 @@
+# Some weird file that keeps appearing on the pi
+''$'\001\363\035'
+
 OpenPose/
 models/
 weights/

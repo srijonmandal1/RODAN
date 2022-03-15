@@ -80,7 +80,7 @@ def add_event():
             "longitude": event["longitude"],
             "time": time.time(),
             "date": str(date.today()),
-            "city": reverse_geocode(event["latitude"], event["longitude"], raw=True)[2]
+            "location": reverse_geocode(event["latitude"], event["longitude"], raw=True)
         }
     else:
         return {

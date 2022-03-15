@@ -1,3 +1,10 @@
+# Some weird file that keeps on appearing on our development PI
+''$'\001\363\035'
+
+*.pt
+*.xml
+vids/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -15,14 +15,16 @@ app.config["MONGO_URI"] = (
 
 mongo = PyMongo(app)
 
-agg_result = list(mongo.db.events.aggregate(
-    [{ "$group" : {
-        "_id" : {
-            "date": "$date",
-            "event_name": "$event"
-        },
-         "total": {"$sum" : 1}
-        }}
-    ]))
+# x=list(mongo.db.events.aggregate(
+#     { "$group" : {
+#         "_id" : {
+#             "date": "$date",
+#             "event_name": "$event",
+#             "city": "$city"
+#         },
+#          "total": {"$sum" : 1}
+#         }}
+#     ))
+y = list(mongo.db.events.find({}))
 
-print((agg_result[0])['_id'])
+print(y)

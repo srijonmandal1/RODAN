@@ -1,22 +1,25 @@
 <!DOCTYPE HTML>
 <html>
 
-<head>
-  <title>RODAN - Home</title>
+<head align="center" >
+  <title align="center">RODAN - Home</title>
   <meta name="description" content="website description" />
   <meta name="keywords" content="website keywords, website keywords" />
+  <meta name="viewport" content="width=device-width", initial-scale=1.0/>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
   <link rel="stylesheet" type="text/css" href="../static/style/style.css" title="style" />
 </head>
 
-<body>
-  <div id="main">
+<body style="text-align:center;">
+  <div id="main" style="text-align:center;">
     <div id="header">
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="/">RO<span class="logo_colour">DAN</span></a></h1>
-          <h2>RODAN aims to be a driver assistance system that isn't built into the car.</h2>
+          <h1 align="center"><a href="/">RO<span class="logo_colour">DAN</span></a></h1>
+          <h2 align="center">Road safety Device for Accicent prevention, Driver assistance and Traffic monitoring.</h2>
+          <h2 align="center">Lets make this world safer and better place to drive in.</h2>
+          <h2 align="center">RODAN can generate alerts and help take preventive measures and proactive actions.</h2>
         </div>
       </div>
       <div id="menubar">
@@ -30,23 +33,28 @@
         </ul>
       </div>
     </div>
-    <h>Device: RDN1</h>
-    <table>
-      <tr>
-        <th>Date</th>
-        <th>Event</th>
-        <th>Count</th>
-      </tr>
-      <tr>
-        <td>Alfreds Futterkiste</td>
-        <td>Maria Anders</td>
-        <td>Germany</td>
-      </tr>
-      <tr>
-        <td>Centro comercial Moctezuma</td>
-        <td>Francisco Chang</td>
-        <td>Mexico</td>
-      </tr>
+    <h1 align="center">Device# RDN1 <img width="20" height="20" src="../static/images/alert.png" alt="Alerts"> No Critial Incident Reported !</h1>
+    <h2><img width="20" height="20" src="../static/images/regular_incidents.png" alt="Alerts">Current Traffic Situation.</h2>
+    <table align="center" style="margin: 2px auto;">
+      <thead>
+        <tr>
+          <th><img width="40" height="40" src="../static/images/date.png" alt="Date">
+          </th>
+          <th><img width="40" height="40" src="../static/images/event.png" alt="Event"></th>
+          <th><img width="40" height="40" src="../static/images/city.png" alt="City"></th>
+          <th><img width="40" height="40" src="../static/images/counter.png" alt="Total"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {%for record in agg_result%}
+          <td width="40" height="40">{{record["_id"]["date"]}}</td>
+          <td width="40" height="40">{{record["_id"]["event_name"]}}</td>
+          <td width="40" height="40">{{record["_id"]["city"]}}</td>
+          <td width="40" height="40">{{record["total"]}}</td>
+        </tr>
+          {% endfor %}
+      <tbody>
     </table>
   </div>
 </body>

@@ -32,7 +32,7 @@
       <div id="content">
         <!-- insert the page content here -->
         <h1>Logs</h1>
-        <p>This is to view all the logs. You can filter the logs down using the filters. Switch to the aggregation tab for a view of the aggregated data.</p>
+        <p>This is to view all the logs. You can filter the logs down using the filters. Switch to the home tab for a view of the aggregated data.</p>
         {% for event in events %}
             {% if event["count"] > 1 %}
                 <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["time"]) }} in {{ reverse_geocode(event["latitude"], event["longitude"]) }}</p>

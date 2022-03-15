@@ -1,3 +1,4 @@
+from asyncio import events
 import os
 import time
 import datetime
@@ -28,10 +29,18 @@ mongo = PyMongo(app)
 
 @app.route("/")
 def home():
-    agg_result = mongo.db.events.aggregate(
-    [{ "$group" : {"_id" : "$date"}}
-    ])
-    return render_template("home.html", agg_result=agg_result)
+    event_stats = list(mongo.db.events.aggregate(
+    [{ "$group" : {
+        "_id" : {
+            "date": "$date",
+            "event_name": "$event",
+            "city": "$city"
+        },
+         "total": {"$sum" : 1}
+        }}
+    ]))
+    
+    return render_template("home.html", agg_result=event_stats)
 
 
 @app.route("/examples")
@@ -54,7 +63,7 @@ def contact():
 
 
 @app.route("/api/v1/add-event", methods=["POST"])
-def add_events():
+def add_event():
     event = request.json
     if (
         "device-id" in event

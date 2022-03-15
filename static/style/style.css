@@ -7,8 +7,8 @@ html
 
 body
 { font: normal .80em 'trebuchet ms', arial, sans-serif;
-  background: #F0EFE2 url(background.png) repeat;
-  color: #000;}
+  background: #f0efe2 url(background.png) repeat;
+  color: rgb(89, 163, 93);}
 
 p
 { padding: 0 0 20px 0;
@@ -105,17 +105,17 @@ ol li
 
 #logo_text h1, #logo_text h1 a, #logo_text h1 a:hover 
 { padding: 22px 0 0 0;
-  color: #000;
+  color: rgb(28, 27, 119);
   letter-spacing: -1px;
   text-decoration: none;}
 
 #logo_text h1 a .logo_colour
-{ color: #000;}
+{ color: rgb(233, 157, 43);}
 
 #logo_text h2
 { font-size: 100%;
   padding: 4px 0 0 0;
-  color: #000;}
+  color: rgb(30, 27, 219);}
 
 #menubar
 { width: 898px;
@@ -211,7 +211,7 @@ ul#menu li a:hover, ul#menu li.selected a, ul#menu li.selected a:hover
   text-decoration: none;}
 
 #footer a:hover
-{ color: #000;
+{ color: rgb(53, 202, 110);
   text-decoration: underline;}
 
 .search
@@ -243,7 +243,7 @@ ul#menu li a:hover, ul#menu li.selected a, ul#menu li.selected a:hover
   font: 100% arial; 
   border: 1px solid #E5E5DB; 
   background: #FFF; 
-  color: #47433F;}
+  color: #77882e;}
   
 .form_settings .submit
 { font: 100% arial; 
@@ -253,7 +253,7 @@ ul#menu li a:hover, ul#menu li.selected a, ul#menu li.selected a:hover
   height: 33px;
   padding: 2px 0 3px 0;
   cursor: pointer; 
-  background: #000; 
+  background: rgb(72, 137, 139); 
   color: #FFF;}
 
 .form_settings textarea, .form_settings select
@@ -276,17 +276,5 @@ ul#menu li a:hover, ul#menu li.selected a, ul#menu li.selected a:hover
   border-top: 1px solid #D9D5CF;
   border-bottom: 1px solid #FFF;
   margin: 0 0 20px 0;}
-  
-table
-{ margin: 10px 0 30px 0;}
 
-table tr th, table tr td
-{ background: #3B3B3B;
-  color: #FFF;
-  padding: 7px 4px;
-  text-align: left;}
-  
-table tr td
-{ background: #F0EFE2;
-  color: #47433F;
-  border-top: 1px solid #FFF;}
+

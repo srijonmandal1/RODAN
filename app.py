@@ -1,10 +1,9 @@
-from asyncio import events
 import os
 import time
 import datetime
 from datetime import date
 
-from flask import *
+from flask import Flask, request, render_template, jsonify
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
@@ -29,23 +28,30 @@ mongo = PyMongo(app)
 
 @app.route("/")
 def home():
-    event_stats = list(mongo.db.events.aggregate(
-    [{ "$group" : {
-        "_id" : {
-            "date": "$date",
-            "event_name": "$event",
-            "city": "$city"
-        },
-         "total": {"$sum" : 1}
-        }}
-    ]))
-    
+    event_stats = list(
+        mongo.db.events.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": {
+                            "date": "$date",
+                            "event": "$event",
+                            "location": "$location",
+                        },
+                        "total": {"$sum": 1},
+                    }
+                }
+            ]
+        )
+    )
+
     return render_template("home.html", agg_result=event_stats)
 
 
 @app.route("/examples")
 def examples():
     return render_template("examples.html")
+
 
 @app.route("/logs")
 def logs():
@@ -80,7 +86,9 @@ def add_event():
             "longitude": event["longitude"],
             "time": time.time(),
             "date": str(date.today()),
-            "location": reverse_geocode(event["latitude"], event["longitude"], raw=True)
+            "location": reverse_geocode(
+                event["latitude"], event["longitude"], raw=True
+            ),
         }
     else:
         return {

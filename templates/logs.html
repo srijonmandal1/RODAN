@@ -5,7 +5,7 @@
   <meta name="description" content="website description" />
   <meta name="keywords" content="website keywords, website keywords" />
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-  <link rel="stylesheet" type="text/css" href="../static/style/style.css" title="style" />
+  <link rel="stylesheet" type="text/css" href="/static/style/style.css" title="style"/>
 </head>
 <body>
   <div id="main">
@@ -13,8 +13,10 @@
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="/">RODAN</a></h1>
-          <h2>RODAN aims to be a driver assistance system that isn't built into the car.</h2>
+          <h1><a href="/">RO<span class="logo_colour">DAN</span></a></h1>
+          <h2>Road safety Device for Accicent prevention, Driver assistance and Traffic monitoring.</h2>
+          <h2>Lets make this world safer and better place to drive in.</h2>
+          <h2>RODAN can generate alerts and help take preventive measures and proactive actions.</h2>
         </div>
       </div>
       <div id="menubar">
@@ -35,9 +37,9 @@
         <p>This is to view all the logs. You can filter the logs down using the filters. Switch to the home tab for a view of the aggregated data.</p>
         {% for event in events %}
             {% if event["count"] > 1 %}
-                <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["time"]) }} in {{ reverse_geocode(event["latitude"], event["longitude"]) }}</p>
+                <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["time"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
             {% else %}
-                <p>{{ event["count"] }} {{ event["event"] }} were detected at {{ format_date(event["time"]) }} in {{ reverse_geocode(event["latitude"], event["longitude"]) }}</p>
+                <p>{{ event["count"] }} {{ event["event"] }} were detected at {{ format_date(event["time"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
             {% endif %}
         {% endfor %}
       </div>

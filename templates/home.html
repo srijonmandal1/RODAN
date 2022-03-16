@@ -49,7 +49,8 @@
             <tr>
                 <td height="40">{{ record["_id"]["date"] }}</td>
                 <td height="40">{{ record["_id"]["event"] }}</td>
-                <td height="40">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
+                <!-- <td height="40">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td> -->
+                <td height="40">{{ record["_id"]["location"]}}</td>
                 <td height="40">{{ record["total"] }}</td>
             </tr>
             {% endfor %}

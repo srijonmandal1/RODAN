@@ -5,6 +5,7 @@ import argparse
 import socket
 import json
 
+
 import pytesseract
 import torch
 import cv2
@@ -27,16 +28,16 @@ parser.add_argument("--prod", help="production or not", action="store_true")
 args = parser.parse_args()
 # Model
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
-model = torch.hub.load("../../yolov5", "custom", path="yolov5s.pt", source="local")
+model = torch.hub.load("../yolov5", "custom", path="yolov5s.pt", source="local")
 lisa_dataset = torch.hub.load(
-    "../../yolov5", "custom", path="../lisa_weights/best.pt", source="local"
+    "../yolov5", "custom", path="../RODAN-RND/lisa_weights/best.pt", source="local"
 )
 # fire_dataset = torch.hub.load(
 #     "../../yolov5", "custom", path="../fire_weights/somefires.pt", source="local"
 # )
 
-HOST = 'localhost'
-PORT = 6011
+HOST = "localhost"
+PORT = 6013
 
 communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 communication_socket.connect((HOST, PORT))
@@ -121,6 +122,7 @@ def whitelist_keys(whitelisted, detected):
     for key, value in detected.items():
         if key not in new_detected:
             print(f"{value} {key} have not been whitelisted")
+
     return new_detected
 
 
@@ -136,15 +138,12 @@ def find_events(events, results):
     found = False
     audio_msg = ""
     msg = ""
-    print(results)
     for detected, number in results.items():
         # note
         # if detected == "traffic light":
         #       find the bounding box
         #       then in cropped image, get color of image
         #       alert if red, warning if yellow, and if green do nothing
-
-        print(events[-1])
 
         send_to_bluetooth = True
 
@@ -162,15 +161,19 @@ def find_events(events, results):
         # if detected in ["car","person","pedestrian","stop","stop sign","bicycle"]:
         #     send_to_bluetooth = False
 
-        this_msg, this_audio_msg = send_events_and_process(detected, number, send_to_bluetooth)
-        if detected == "stop sign":
-            this_msg = this_audio_msg = "Remember to slow down!"
-        if detected == "heavy traffic":
-            this_msg = this_audio_msg = "Heavy traffic seems to be building ahead. Slow Down!"
-        if detected == "pedestrian" or "pedestrianCrossing":
-            this_msg = this_audio_msg = "Watch out! Pedestrians may be crossing."
+        this_msg, this_audio_msg = send_events_and_process(
+            detected, number, send_to_bluetooth
+        )
 
         if this_msg is not None:
+            if detected == "stop sign":
+                this_msg = this_audio_msg = "Remember to slow down!"
+            elif detected == "heavy traffic":
+                this_msg = (
+                    this_audio_msg
+                ) = "There seems to be heavy traffic ahead. Slow Down!"
+            elif detected == "pedestrian" or detected == "pedestrianCrossing":
+                this_msg = this_audio_msg = "Watch out! Pedestrians may be crossing."
             msg += this_msg
             audio_msg += this_audio_msg
 
@@ -185,14 +188,18 @@ def find_events(events, results):
 def send_events_and_process(detected, number, send_to_bluetooth=True):
     to_return = (None, None)
     event_to_send_to_process = []
-    if len(events) > 2 and detected in events[-2] and detected not in events[-3]:
+
+    if len(events) > 2 and detected not in events[-2]:
         event_to_send_to_process.append({"event": detected, "count": number})
         if number == 1:
             to_return = (f"A {detected} is ahead. ", f"A {detected} is ahead.")
         else:
-            to_return = (f"{number} {pluralize(detected)} are ahead. ", f"{number} {pluralize(detected)} are ahead.")
-    if send_to_bluetooth:
-        communication_socket.send(json.dumps(event_to_send_to_process).encode())
+            to_return = (
+                f"{number} {pluralize(detected)} are ahead. ",
+                f"{number} {pluralize(detected)} are ahead.",
+            )
+        if send_to_bluetooth:
+            communication_socket.send(json.dumps(event_to_send_to_process).encode())
 
     return to_return
 
@@ -220,7 +227,7 @@ def check_speed_limit(gray_frame):
     signs = sign_cascade.detectMultiScale(gray_frame)
     for (x, y, w, h) in signs:
         # img = cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-        roi_gray = gray_frame[y: y + h, x: x + w]
+        roi_gray = gray_frame[y : y + h, x : x + w]
 
         recognized_text = pytesseract.image_to_string(
             roi_gray, config="-c tessedit_char_whitelist=0123456789 --psm 6"
@@ -230,7 +237,10 @@ def check_speed_limit(gray_frame):
 
 phone_connected = False
 
-show_alert("Waiting for the phone to be connected to RODAN", "Please connect your phone to Row Dan")
+show_alert(
+    "Waiting for the phone to be connected to RODAN",
+    "Please connect your phone to Row Dan",
+)
 while not phone_connected and runUi:
     pygame.display.update()
     screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
@@ -242,12 +252,18 @@ while not phone_connected and runUi:
         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
             pos = event.pos
             quit_button.check_click(*pos)
+            communication_socket.close()
+            sys.exit()
         elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
             pos = (event.x * screen.get_width(), event.y * screen.get_height())
             quit_button.check_click(*pos)
+            communication_socket.close()
+            sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == K_q:
                 runUi = False
+                communication_socket.close()
+                sys.exit()
 
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
@@ -261,6 +277,7 @@ if args.source.isnumeric():
 else:
     print(f"Loading video from {args.source}")
     cap = cv2.VideoCapture(args.source)
+
 
 while runUi:
     ret, frame = cap.read()
@@ -283,7 +300,6 @@ while runUi:
     else:
         results = {}
     events.append(results)
-    print(results)
     pygame.display.update()
     screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
     quit_button.draw()
@@ -309,4 +325,4 @@ while runUi:
 
 cap.release()
 cv2.destroyAllWindows()
-sys.exit()
+communication_socket.close()

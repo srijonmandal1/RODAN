@@ -6,7 +6,7 @@ import requests
 HOST = "0.0.0.0"
 PORT = 6011
 
-SERVER_URL = "https://rodan-das.herokuapp.com/api/v1/add-event"
+# SERVER_URL = "https://rodan-das.herokuapp.com/api/v1/add-event"
 SERVER_URL = "http://localhost:5000/api/v1/add-event"
 
 

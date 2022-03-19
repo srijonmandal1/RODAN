@@ -7,11 +7,14 @@ from flask import Flask, request, render_template, jsonify
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
+from flask_socketio import SocketIO, emit
+from engineio.payload import Payload
 
 from pluralize import pluralize
 
 
 geolocator = Nominatim(user_agent="RODAN")
+Payload.max_decode_packets = 500
 
 if "DYNO" not in os.environ:
     load_dotenv()
@@ -19,11 +22,12 @@ if "DYNO" not in os.environ:
 app = Flask(__name__)
 app.config["MONGO_URI"] = (
     os.environ["MONGO_URI"]
-    .replace("<username>", os.environ["USERNAME"])
+    .replace("<username>", os.environ["DATABASE_USERNAME"])
     .replace("<password>", os.environ["PASSWORD"])
 )
 
 mongo = PyMongo(app)
+socketio = SocketIO(app)
 
 
 @app.route("/")
@@ -96,6 +100,7 @@ def add_event():
             "message": 'Please provide an "event", a "count", a "latitude", and a "longitude"',
         }
     mongo.db.events.insert_one(event)
+    socketio.emit("events", get_agg_events(raw=True), broadcast=True)
     return {"success": True}
 
 
@@ -104,6 +109,29 @@ def get_events():
     return jsonify(
         [{**item, "_id": str(item["_id"])} for item in list(mongo.db.events.find())]
     )
+
+
+@app.route("/api/v1/get-agg-events")
+def get_agg_events(raw=False):
+    agg_data = list(
+        mongo.db.events.aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": {
+                            "date": "$date",
+                            "event": "$event",
+                            "location": "$location",
+                        },
+                        "total": {"$sum": 1},
+                    }
+                }
+            ]
+        )
+    )
+    if raw:
+        return agg_data
+    return jsonify(agg_data)
 
 
 @app.context_processor
@@ -132,5 +160,23 @@ def reverse_geocode_jinja_func():
     return dict(reverse_geocode=reverse_geocode)
 
 
+@app.context_processor
+def format_date():
+    def format_date_func(date):
+        date = date.split("-")
+        return f"{date[1].strip('0')}/{date[2]}/{date[0]}"
+    return dict(format_date=format_date_func)
+
+
+@socketio.on("connect")
+def connect():
+    pass
+
+
+@socketio.on("disconnect")
+def disconnect():
+    pass
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)

@@ -6,7 +6,8 @@
   <meta name="keywords" content="website keywords, website keywords" />
   <meta name="viewport" content="width=device-width", initial-scale=1.0/>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-  <link rel="stylesheet" type="text/css" href="/static/style/style.css" title="style" />
+  <link rel="stylesheet" type="text/css" href="/static/style/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
   <div id="main">
@@ -15,8 +16,8 @@
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
           <h1><a href="/">RO<span class="logo_colour">DAN</span></a></h1>
-          <h2>Road safety Device for Accicent prevention, Driver assistance and Traffic monitoring.</h2>
-          <h2>Lets make this world safer and better place to drive in.</h2>
+          <h2><span class="logo_colour">RO</span>ad safety <span class="logo_colour">D</span>evice for <span class="logo_colour">A</span>ccident preventio<span class="logo_colour">N</span></h2>
+          <h2>Let's make this world a safer and better place to drive in.</h2>
           <h2>RODAN can generate alerts and help take preventive measures and proactive actions.</h2>
         </div>
       </div>
@@ -32,30 +33,59 @@
       </div>
     </div>
     <div id="data" style="text-align: center;">
-        <h1>Device# RDN1 <img width="20" height="20" src="/static/images/alert.png" alt="Alerts"> No Critial Incident Reported !</h1>
+        <h3>Device# RDN1 <img width="20" height="20" src="/static/images/alert.png" alt="Alerts"> No Critical Incident Reported!</h3>
         <h2><img width="20" height="20" src="/static/images/regular_incidents.png" alt="Alerts">Current Traffic Situation.</h2>
         <table style="margin-left: auto; margin-right: auto;">
         <thead>
             <tr>
-            <th><img width="40" height="40" src="/static/images/date.png" alt="Date">
+            <th><img width="30" height="30" src="/static/images/date.png" alt="Date">
             </th>
-            <th><img width="40" height="40" src="/static/images/event.png" alt="Event"></th>
-            <th><img width="40" height="40" src="/static/images/city.png" alt="City"></th>
-            <th><img width="40" height="40" src="/static/images/counter.png" alt="Total"></th>
+            <th><img width="30" height="30" src="/static/images/event.png" alt="Event"></th>
+            <th><img width="30" height="30" src="/static/images/city.png" alt="City"></th>
+            <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="tbodydata">
             {% for record in agg_result %}
             <tr>
-                <td height="40">{{ record["_id"]["date"] }}</td>
-                <td height="40">{{ record["_id"]["event"] }}</td>
-                <!-- <td height="40">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td> -->
-                <td height="40">{{ record["_id"]["location"]}}</td>
-                <td height="40">{{ record["total"] }}</td>
+                <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
+                <td height="30">{{ record["_id"]["event"] }}</td>
+                <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
+                <!-- <td height="30">{{ record["_id"]["location"]}}</td> -->
+                <td height="30">{{ record["total"] }}</td>
             </tr>
             {% endfor %}
         <tbody>
         </table>
+        <script>
+            globalThis.socket = io();
+            socket.on("events", function(events) {
+                document.getElementById("tbodydata").innerHTML = "";
+                for (let event of events) {
+                    let row = document.createElement("tr");
+                    let date = document.createElement("td");
+                    let event_type = document.createElement("td");
+                    let location = document.createElement("td");
+                    let total = document.createElement("td");
+                    let date_lst = event._id.date.split("-");
+                    date.innerHTML = event._id.date.split("-");
+                    date.innerHTML = `${date_lst[1].trim("0")}/${date_lst[2]}/${date_lst[0]}`;
+                    date.height = 30;
+                    event_type.innerHTML = event._id.event;
+                    event_type.height = 30;
+                    location.innerHTML = `${event._id.location[2]}, ${event._id.location[4]} ${event._id.location[5]}`;
+                    location.height = 30;
+                    total.innerHTML = event.total;
+                    total.height = 30;
+                    row.appendChild(date);
+                    row.appendChild(event_type);
+                    row.appendChild(location);
+                    row.appendChild(total);
+                    document.getElementById("tbodydata").appendChild(row);
+                }
+                console.log(events);
+            });
+        </script>
     </div>
   </div>
 </body>

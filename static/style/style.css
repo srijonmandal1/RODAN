@@ -1,23 +1,8 @@
-/* html {
-  height: 100%;
-} */
-
-/* * {
-  margin: 0;
-  padding: 0;
-} */
-
 body {
   font: normal 0.8em "trebuchet ms", arial, sans-serif;
   background: #f0efe2 url(background.png) repeat;
   color: rgb(89, 163, 93);
-  
 }
-
-/* p {
-  padding: 0 0 20px 0;
-  line-height: 1.7em;
-} */
 
 img {
   border: 0;
@@ -151,7 +136,7 @@ ol li {
   text-decoration: none;
 }
 
-#logo_text h1 a .logo_colour {
+#logo_text .logo_colour {
   color: rgb(233, 157, 43);
 }
 

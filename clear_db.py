@@ -7,7 +7,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = os.environ["MONGO_URI"].replace(
-    "<username>", os.environ["USERNAME"]).replace("<password>", os.environ["PASSWORD"])
+    "<username>", os.environ["DATABASE_USERNAME"]).replace("<password>", os.environ["PASSWORD"])
 
 mongo = PyMongo(app)
 

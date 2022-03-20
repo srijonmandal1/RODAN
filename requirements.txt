@@ -1,7 +1,7 @@
 flask
 flask-pymongo
 flask-socketio
-eventlet
+eventlet==0.30.2
 dnspython
 python-dotenv
 geopy

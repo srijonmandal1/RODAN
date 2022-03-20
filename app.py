@@ -36,7 +36,7 @@ def home():
 
 
 @app.route("/resources")
-def examples():
+def resources():
     return render_template("resources.html")
 
 

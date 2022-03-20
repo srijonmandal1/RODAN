@@ -6,3 +6,4 @@ dnspython
 python-dotenv
 geopy
 gunicorn
+simple-websocket

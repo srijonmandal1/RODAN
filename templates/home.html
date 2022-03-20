@@ -32,63 +32,58 @@
           <li><a href="/contact">Contact Us</a></li>
         </ul>
       </div>
-      <br>
-      <div id="data" style="text-align: center;" class="site_content">
-        <h3>Device# RDN1 <img width="20" height="20" src="/static/images/alert.png" alt="Alerts"> No Critical Incident Reported!</h3>
-        <h2><img width="20" height="20" src="/static/images/regular_incidents.png" alt="Alerts">Current Traffic Situation.</h2>
-        <table style="margin-left: auto; margin-right: auto;" class="border-none">
-          <thead>
-            <tr>
-              <th><img width="30" height="30" src="/static/images/date.png" alt="Date"></th>
-              <th><img width="30" height="30" src="/static/images/event.png" alt="Event"></th>
-              <th><img width="30" height="30" src="/static/images/city.png" alt="City"></th>
-              <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
-            </tr>
-          </thead>
-          <tbody id="tbodydata">
-            {% for record in agg_result %}
+      <div id="site_content">
+        <div id="content">
+          <p style="font-size: 1.5vw;">Device# RDN1 <img width="20" height="20" src="/static/images/alert.png" alt="Alerts"> No Critical Incident Reported!</p>
+          <p style="font-size: 1.5vw;"><img width="20" height="20" src="/static/images/regular_incidents.png" alt="Alerts">Current Traffic Situation.</p>
+          <table style="margin-left: auto; margin-right: auto; text-align: center;" class="border-none">
+            <thead>
               <tr>
-                <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
-                <td height="30">{{ record["_id"]["event"] }}</td>
-                <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
-                <td height="30">{{ record["total"] }}</td>
+                <th><img width="30" height="30" src="/static/images/date.png" alt="Date"></th>
+                <th><img width="30" height="30" src="/static/images/event.png" alt="Event"></th>
+                <th><img width="30" height="30" src="/static/images/city.png" alt="City"></th>
+                <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
               </tr>
-            {% endfor %}
-          <tbody>
-        </table>
-        <script>
-          globalThis.socket = io();
-          socket.on("events", function(events) {
-            events = JSON.parse(events);
-            document.getElementById("tbodydata").innerHTML = "";
-            for (let event of events) {
-              let row = document.createElement("tr");
-              let date = document.createElement("td");
-              let event_type = document.createElement("td");
-              let location = document.createElement("td");
-              let total = document.createElement("td");
-              let date_lst = event._id.date.split("-");
-              date.innerHTML = event._id.date.split("-");
-              date.innerHTML = `${date_lst[1].trim("0")}/${date_lst[2]}/${date_lst[0]}`;
-              date.height = 30;
-              event_type.innerHTML = event._id.event;
-              event_type.height = 30;
-              location.innerHTML = `${event._id.location[2]}, ${event._id.location[4]} ${event._id.location[5]}`;
-              location.height = 30;
-              total.innerHTML = event.total;
-              total.height = 30;
-              row.appendChild(date);
-              row.appendChild(event_type);
-              row.appendChild(location);
-              row.appendChild(total);
-              document.getElementById("tbodydata").appendChild(row);
-            }
-          });
-        </script>
+            </thead>
+            <tbody id="tbodydata">
+              {% for record in agg_result %}
+                <tr>
+                  <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
+                  <td height="30">{{ record["_id"]["event"] }}</td>
+                  <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
+                  <td height="30">{{ record["total"] }}</td>
+                </tr>
+              {% endfor %}
+            <tbody>
+          </table>
+          <script>
+            globalThis.socket = io();
+            socket.on("events", function(events) {
+              events = JSON.parse(events);
+              document.getElementById("tbodydata").innerHTML = "";
+              for (let event of events) {
+                let row = document.createElement("tr");
+                let date = document.createElement("td");
+                let event_type = document.createElement("td");
+                let location = document.createElement("td");
+                let total = document.createElement("td");
+                let date_lst = event._id.date.split("-");
+                date.innerHTML = event._id.date.split("-");
+                event_type.innerHTML = event._id.event;
+                location.innerHTML = `${event._id.location[2]}, ${event._id.location[4]} ${event._id.location[5]}`;
+                total.innerHTML = event.total;
+                date.height = event_type.height = location.height = total.height = 30;
+                row.appendChild(date);
+                row.appendChild(event_type);
+                row.appendChild(location);
+                row.appendChild(total);
+                document.getElementById("tbodydata").appendChild(row);
+              }
+            });
+          </script>
+        </div>
       </div>
     </div>
-    <br>
-    
   </div>
 </body>
 </html>

@@ -30,16 +30,16 @@
         </ul>
       </div>
     </div>
-    <div id="site_content">
+    <div>
       <div id="content">
         <!-- insert the page content here -->
         <h1>Logs</h1>
         <p>This is to view all the logs. You can filter the logs down using the filters. Switch to the home tab for a view of the aggregated data.</p>
         {% for event in events %}
             {% if event["count"] > 1 %}
-                <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["time"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
+                <p>{{ event["count"] }} {{ pluralize(event["event"]) }} were detected at {{ format_date(event["date"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
             {% else %}
-                <p>{{ event["count"] }} {{ event["event"] }} were detected at {{ format_date(event["time"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
+                <p>{{ event["count"] }} {{ event["event"] }} were detected at {{ format_date(event["date"]) }} in {{ event["location"][2] }}, {{ event["location"][4] }} {{ event["location"][5] }}</p>
             {% endif %}
         {% endfor %}
       </div>

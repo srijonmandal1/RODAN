@@ -35,27 +35,27 @@
     <div id="data" style="text-align: center;">
         <h3>Device# RDN1 <img width="20" height="20" src="/static/images/alert.png" alt="Alerts"> No Critical Incident Reported!</h3>
         <h2><img width="20" height="20" src="/static/images/regular_incidents.png" alt="Alerts">Current Traffic Situation.</h2>
-        <table style="margin-left: auto; margin-right: auto;">
-        <thead>
-            <tr>
-            <th><img width="30" height="30" src="/static/images/date.png" alt="Date">
-            </th>
-            <th><img width="30" height="30" src="/static/images/event.png" alt="Event"></th>
-            <th><img width="30" height="30" src="/static/images/city.png" alt="City"></th>
-            <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
-            </tr>
-        </thead>
-        <tbody id="tbodydata">
-            {% for record in agg_result %}
-            <tr>
-                <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
-                <td height="30">{{ record["_id"]["event"] }}</td>
-                <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
-                <!-- <td height="30">{{ record["_id"]["location"]}}</td> -->
-                <td height="30">{{ record["total"] }}</td>
-            </tr>
-            {% endfor %}
-        <tbody>
+        <table style="margin-left: auto; margin-right: auto;" class="border-none">
+            <thead>
+                <tr>
+                <th><img width="30" height="30" src="/static/images/date.png" alt="Date">
+                </th>
+                <th><img width="30" height="30" src="/static/images/event.png" alt="Event"></th>
+                <th><img width="30" height="30" src="/static/images/city.png" alt="City"></th>
+                <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodydata">
+                {% for record in agg_result %}
+                    <tr>
+                        <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
+                        <td height="30">{{ record["_id"]["event"] }}</td>
+                        <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
+                        <!-- <td height="30">{{ record["_id"]["location"]}}</td> -->
+                        <td height="30">{{ record["total"] }}</td>
+                    </tr>
+                {% endfor %}
+            <tbody>
         </table>
         <script>
             globalThis.socket = io();

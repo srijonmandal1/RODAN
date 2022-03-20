@@ -32,24 +32,7 @@ socketio = SocketIO(app)
 
 @app.route("/")
 def home():
-    event_stats = list(
-        mongo.db.events.aggregate(
-            [
-                {
-                    "$group": {
-                        "_id": {
-                            "date": "$date",
-                            "event": "$event",
-                            "location": "$location",
-                        },
-                        "total": {"$sum": 1},
-                    }
-                }
-            ]
-        )
-    )
-
-    return render_template("home.html", agg_result=event_stats)
+    return render_template("home.html", agg_result=get_agg_events(raw=True))
 
 
 @app.route("/examples")
@@ -113,21 +96,23 @@ def get_events():
 
 @app.route("/api/v1/get-agg-events")
 def get_agg_events(raw=False):
-    agg_data = list(
-        mongo.db.events.aggregate(
-            [
-                {
-                    "$group": {
-                        "_id": {
-                            "date": "$date",
-                            "event": "$event",
-                            "location": "$location",
-                        },
-                        "total": {"$sum": 1},
+    agg_data = sorted(
+        list(
+            mongo.db.events.aggregate(
+                [
+                    {
+                        "$group": {
+                            "_id": {
+                                "date": "$date",
+                                "event": "$event",
+                                "location": "$location",
+                            },
+                            "total": {"$sum": 1},
+                        }
                     }
-                }
-            ]
-        )
+                ]
+            )
+        ), key=lambda item: item["_id"]["date"], reverse=True
     )
     if raw:
         return agg_data
@@ -137,15 +122,6 @@ def get_agg_events(raw=False):
 @app.context_processor
 def pluralize_jinja():
     return dict(pluralize=pluralize)
-
-
-@app.context_processor
-def format_date():
-    return dict(
-        format_date=lambda time: datetime.datetime.fromtimestamp(time).strftime(
-            "%-I:%M %-m/%d/%Y"
-        )
-    )
 
 
 def reverse_geocode(latitude, longitude, raw=False):
@@ -165,6 +141,7 @@ def format_date():
     def format_date_func(date):
         date = date.split("-")
         return f"{date[1].strip('0')}/{date[2]}/{date[0]}"
+
     return dict(format_date=format_date_func)
 
 

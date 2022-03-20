@@ -106,8 +106,17 @@ ol li {
   height: 202px;
 }
 
-table, th, td {
+.border-none {
+  border-collapse: collapse;
+  border: none;
+}
+
+.border-none td {
   border: 1px solid black;
+}
+
+th, td {
+  padding: 15px;
 }
 
 #logo {

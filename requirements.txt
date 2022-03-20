@@ -1,5 +1,6 @@
 flask
 flask-pymongo
+flask-socketio
 dnspython
 python-dotenv
 geopy

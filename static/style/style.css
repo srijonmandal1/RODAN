@@ -106,6 +106,10 @@ ol li {
   height: 202px;
 }
 
+table, th, td {
+  border: 1px solid black;
+}
+
 #logo {
   width: 898px;
   position: relative;

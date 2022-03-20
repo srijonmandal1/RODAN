@@ -1,6 +1,6 @@
 import os
 import time
-import datetime
+import json
 from datetime import date
 
 from flask import Flask, request, render_template, jsonify
@@ -83,7 +83,7 @@ def add_event():
             "message": 'Please provide an "event", a "count", a "latitude", and a "longitude"',
         }
     mongo.db.events.insert_one(event)
-    socketio.emit("events", get_agg_events(raw=True), broadcast=True)
+    socketio.emit("events", json.dumps(get_agg_events(raw=True)), broadcast=True)
     return {"success": True}
 
 

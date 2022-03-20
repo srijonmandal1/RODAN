@@ -60,6 +60,7 @@
         <script>
             globalThis.socket = io();
             socket.on("events", function(events) {
+                events = JSON.parse(events);
                 document.getElementById("tbodydata").innerHTML = "";
                 for (let event of events) {
                     let row = document.createElement("tr");

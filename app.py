@@ -35,9 +35,9 @@ def home():
     return render_template("home.html", agg_result=get_agg_events(raw=True))
 
 
-@app.route("/examples")
+@app.route("/resources")
 def examples():
-    return render_template("examples.html")
+    return render_template("resources.html")
 
 
 @app.route("/logs")

@@ -45,22 +45,23 @@
                 <th><img width="30" height="30" src="/static/images/counter.png" alt="Total"></th>
               </tr>
             </thead>
-            <tbody id="tbodydata">
-              {% for record in agg_result %}
-                <tr>
-                  <td height="30">{{ format_date(record["_id"]["date"]) }}</td>
-                  <td height="30">{{ record["_id"]["event"] }}</td>
-                  <td height="30">{{ record["_id"]["location"][2] }}, {{ record["_id"]["location"][4] }} {{ record["_id"]["location"][5] }}</td>
-                  <td height="30">{{ record["total"] }}</td>
-                </tr>
-              {% endfor %}
-            <tbody>
+            <tbody id="tbodydata" style="text-align: center"><tbody>
           </table>
           <script>
             globalThis.socket = io();
-            socket.on("events", function(events) {
-              events = JSON.parse(events);
-              document.getElementById("tbodydata").innerHTML = "";
+            function refreshData(events) {
+              let tbodydata = document.getElementById("tbodydata")
+              if (events.length == 0) {
+                let message = document.createElement("p");
+                message.innerText = "No data available.";
+                message.id = "nodatamessage";
+                tbodydata.parentElement.parentElement.appendChild(message);
+                return;
+              }
+              if (document.getElementById("nodatamessage") != null) {
+                document.getElementById("nodatamessage").remove();
+              }
+              tbodydata.innerHTML = "";
               for (let event of events) {
                 let row = document.createElement("tr");
                 let date = document.createElement("td");
@@ -68,17 +69,23 @@
                 let location = document.createElement("td");
                 let total = document.createElement("td");
                 let date_lst = event._id.date.split("-");
-                date.innerHTML = `${date_lst[0].trim("0")}/${date_lst[1]}/${date_lst[2]}`;
+                date.innerHTML = `${date_lst[1].trim("0")}/${date_lst[2]}/${date_lst[0]}`;
                 event_type.innerHTML = event._id.event;
-                location.innerHTML = `${event._id.location[2]}, ${event._id.location[4]} ${event._id.location[5]}`;
+                console.log(event._id.location)
+                location.innerHTML = `${event._id.location["town"]}, ${event._id.location["state"]} ${event._id.location["postcode"]}`;
                 total.innerHTML = event.total;
                 date.height = event_type.height = location.height = total.height = 30;
                 row.appendChild(date);
                 row.appendChild(event_type);
                 row.appendChild(location);
                 row.appendChild(total);
-                document.getElementById("tbodydata").appendChild(row);
+                tbodydata.appendChild(row);
               }
+            }
+            socket.on("events", (events) => refreshData(events));
+
+            window.addEventListener('load', function () {
+              fetch("/api/v1/get-agg-events").then(response => response.json()).then(data => refreshData(data));
             });
           </script>
         </div>

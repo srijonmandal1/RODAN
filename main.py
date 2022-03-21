@@ -30,14 +30,14 @@ args = parser.parse_args()
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
 model = torch.hub.load("../yolov5", "custom", path="yolov5s.pt", source="local")
 lisa_dataset = torch.hub.load(
-    "../yolov5", "custom", path="../RODAN-RND/lisa_weights/best.pt", source="local"
+    "../yolov5", "custom", path="lisa_weights/best.pt", source="local"
 )
 # fire_dataset = torch.hub.load(
 #     "../../yolov5", "custom", path="../fire_weights/somefires.pt", source="local"
 # )
 
 HOST = "localhost"
-PORT = 6013
+PORT = 6015
 
 communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 communication_socket.connect((HOST, PORT))
@@ -111,6 +111,7 @@ def show_text(text: str):
         screen.blit(
             label, (screen_width / 2 - width / 2, screen_height / 2 - height / 2)
         )
+        pygame.display.update()
         if time_since_alert is not None and time.time() - time_since_alert > 10:
             alert = ""
             time_since_alert = None
@@ -138,6 +139,21 @@ def find_events(events, results):
     found = False
     audio_msg = ""
     msg = ""
+
+    if "person" in results:
+        events[-1]["pedestrian"] = events[-1]["person"]
+        del events[-1]["person"]
+
+    if "car" in results and results["car"] >= 5:
+        events[-1]["heavy traffic"] = 1
+        del events[-1]["car"]
+
+    if "stop" in results and "stop sign" not in results:
+        events[-1]["stop sign"] = events[-1]["stop"]
+        del events[-1]["stop"]
+    elif "stop" in results:
+        del events[-1]["stop"]
+
     for detected, number in results.items():
         # note
         # if detected == "traffic light":
@@ -146,16 +162,6 @@ def find_events(events, results):
         #       alert if red, warning if yellow, and if green do nothing
 
         send_to_bluetooth = True
-
-        if detected == "person":
-            detected = "pedestrian"
-
-        if number > 5 and detected != "pedestrian":
-            detected = "heavy traffic"
-            number = 1
-
-        if detected == "stop":
-            detected = "stop sign"
 
         # Work in progress: To not bombard the phone with unnecessary events
         # if detected in ["car","person","pedestrian","stop","stop sign","bicycle"]:

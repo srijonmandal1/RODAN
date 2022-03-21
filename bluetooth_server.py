@@ -4,7 +4,7 @@ import json
 import socket
 
 HOST = "0.0.0.0"
-PORT = 6013
+PORT = 6015
 
 bluetooth_funcs.make_discoverable()
 

@@ -68,7 +68,7 @@
                 let location = document.createElement("td");
                 let total = document.createElement("td");
                 let date_lst = event._id.date.split("-");
-                date.innerHTML = event._id.date.split("-");
+                date.innerHTML = `${date_lst[0].trim("0")}/${date_lst[1]}/${date_lst[2]}`;
                 event_type.innerHTML = event._id.event;
                 location.innerHTML = `${event._id.location[2]}, ${event._id.location[4]} ${event._id.location[5]}`;
                 total.innerHTML = event.total;

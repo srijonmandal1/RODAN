@@ -2,6 +2,7 @@ import bluetooth
 import bluetooth_funcs
 import json
 import socket
+import sys
 
 HOST = "0.0.0.0"
 PORT = 6015
@@ -46,6 +47,11 @@ def get_connections():
                             print(f"sending {data}")
                             client_sock.send(data)
                     except json.JSONDecodeError:
+                        if received == "end":
+                            s.close()
+                            server_sock.close()
+                            print("Stopping the bluetooth server")
+                            sys.exit()
                         print(f"Unable to decode {received}")
                 except IOError:
                     print("An IOError was raised")

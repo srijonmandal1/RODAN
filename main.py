@@ -241,6 +241,12 @@ def check_speed_limit(gray_frame):
         interpret_text(recognized_text)
 
 
+def end_program():
+    communication_socket.send("end".encode())
+    communication_socket.close()
+    sys.exit()
+
+
 phone_connected = False
 
 show_alert(
@@ -258,18 +264,15 @@ while not phone_connected and runUi:
         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
             pos = event.pos
             quit_button.check_click(*pos)
-            communication_socket.close()
-            sys.exit()
+            end_program()
         elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
             pos = (event.x * screen.get_width(), event.y * screen.get_height())
             quit_button.check_click(*pos)
-            communication_socket.close()
-            sys.exit()
+            end_program()
         elif event.type == pygame.KEYDOWN:
             if event.key == K_q:
                 runUi = False
-                communication_socket.close()
-                sys.exit()
+                end_program()
 
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
@@ -331,4 +334,4 @@ while runUi:
 
 cap.release()
 cv2.destroyAllWindows()
-communication_socket.close()
+end_program()

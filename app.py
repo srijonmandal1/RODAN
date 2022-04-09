@@ -6,7 +6,7 @@ from flask import Flask, request, render_template, jsonify
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
 from geopy.geocoders import Nominatim
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 from engineio.payload import Payload
 import tweepy
 

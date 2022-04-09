@@ -93,7 +93,7 @@ def add_event():
     if event["event"] in ["fire", "accident", "pothole", "oversized vehicle"]:
         starting = "An" if event["event"][0] in ["a", "e", "i", "o", "u"] else "A"
         auth.create_tweet(
-            text=f"{starting} {event[event]} was detected at {reverse_geocode_output['street']}, {reverse_geocode_output['town']}, {reverse_geocode_output['state']} {reverse_geocode_output['postcode']}"
+            text=f"This is a dummy **test message**: {starting} {event['event']} was detected in {reverse_geocode_output['town']}, {reverse_geocode_output['state']} {reverse_geocode_output['postcode']}"
         )
     mongo.db.events.insert_one(event)
     socketio.emit("events", get_agg_events(raw=True), broadcast=True)
@@ -166,4 +166,4 @@ def disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app)

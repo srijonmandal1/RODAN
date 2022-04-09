@@ -5,7 +5,7 @@ import socket
 import sys
 
 HOST = "0.0.0.0"
-PORT = 6015
+PORT = 6026
 
 bluetooth_funcs.make_discoverable()
 

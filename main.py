@@ -4,8 +4,10 @@ import sys
 import argparse
 import socket
 import json
+import multiprocessing
+import atexit
 
-
+import serial
 import pytesseract
 import torch
 import cv2
@@ -28,16 +30,61 @@ parser.add_argument("--prod", help="production or not", action="store_true")
 args = parser.parse_args()
 # Model
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5m, yolov5l, yolov5x, custom
-model = torch.hub.load("../yolov5", "custom", path="yolov5s.pt", source="local")
+model = torch.hub.load("../yolov5", "custom", path="yolov5_weights/yolov5s.pt", source="local")
 lisa_dataset = torch.hub.load(
-    "../yolov5", "custom", path="lisa_weights/best.pt", source="local"
+    "../yolov5", "custom", path="yolov5_weights/trafficsigns.pt", source="local"
 )
-# fire_dataset = torch.hub.load(
-#     "../../yolov5", "custom", path="../fire_weights/somefires.pt", source="local"
-# )
+fire_model = torch.hub.load(
+    "../yolov5", "custom", path="yolov5_weights/fires.pt", source="local"
+)
+
+# ONLY SHOW SIGNIFICANT CLASSES AND REDUCE NUMBER OF TIMES ALERTS ARE SHOWN
+# Add more..
+significant_classes = [
+    "fire",
+    "person",
+    "pedestrian",
+    "car",
+    "train",
+    "traffic light",
+    "stop",
+    "stop sign",
+    "pedestrianCrossing",
+    "close_distance",
+]
+
+ser = serial.Serial("/dev/serial0", 115200, timeout=0)
+
+
+def read_tfluna_data():
+    while True:
+        counter = ser.in_waiting  # count the number of bytes of the serial port
+        if counter > 8:
+            bytes_serial = ser.read(9)  # read 9 bytes
+            ser.reset_input_buffer()  # reset buffer
+
+            if (
+                bytes_serial[0] == 0x59 and bytes_serial[1] == 0x59
+            ):  # check first two bytes
+                distance = (
+                    bytes_serial[2] + bytes_serial[3] * 256
+                )  # distance in next two bytes
+                strength = (
+                    bytes_serial[4] + bytes_serial[5] * 256
+                )  # signal strength in next two bytes
+                temperature = (
+                    bytes_serial[6] + bytes_serial[7] * 256
+                )  # temp in next two bytes
+                temperature = (temperature / 8.0) - 256.0  # temp scaling and offset
+                return distance / 100.0, strength, temperature
+
+
+if not ser.isOpen():
+    ser.open()
+
 
 HOST = "localhost"
-PORT = 6015
+PORT = 6026
 
 communication_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 communication_socket.connect((HOST, PORT))
@@ -163,30 +210,35 @@ def find_events(events, results):
 
         send_to_bluetooth = True
 
-        # Work in progress: To not bombard the phone with unnecessary events
-        # if detected in ["car","person","pedestrian","stop","stop sign","bicycle"]:
-        #     send_to_bluetooth = False
-
         this_msg, this_audio_msg = send_events_and_process(
             detected, number, send_to_bluetooth
         )
 
         if this_msg is not None:
             if detected == "stop sign":
-                this_msg = this_audio_msg = "Remember to slow down!"
+                this_msg = (
+                    this_audio_msg
+                ) = "There is a stop sign so remember to slow down!"
             elif detected == "heavy traffic":
                 this_msg = (
                     this_audio_msg
                 ) = "There seems to be heavy traffic ahead. Slow Down!"
             elif detected == "pedestrian" or detected == "pedestrianCrossing":
                 this_msg = this_audio_msg = "Watch out! Pedestrians may be crossing."
+            elif detected == "fire":
+                this_msg = this_audio_msg = "Be careful! There is a fire."
+            elif detected == "close_distance":
+                this_msg = (
+                    this_audio_msg
+                ) = "Be careful. There is an object near your car."
             msg += this_msg
             audio_msg += this_audio_msg
 
     if msg:
         found = True
         print(msg)
-        show_alert(msg, audio_msg, True)
+        if detected in significant_classes:
+            show_alert(msg, audio_msg, True)
 
     return found
 
@@ -210,6 +262,67 @@ def send_events_and_process(detected, number, send_to_bluetooth=True):
     return to_return
 
 
+# coco128_queue = multiprocessing.Queue()
+# lisa_queue = multiprocessing.Queue()
+# fire_queue = multiprocessing.Queue()
+# coco128_return_queue = multiprocessing.Queue()
+# lisa_return_queue = multiprocessing.Queue()
+# fire_return_queue = multiprocessing.Queue()
+
+
+# def ml_inference_wrap(model_path, queue, return_queue):
+#     import torch
+
+#     model = torch.hub.load(
+#         "../yolov5", "custom", path=model_path, source="local"
+#     )
+
+
+
+#     while True:
+
+#         frame = queue.get()
+
+
+#         func_output = model(frame)
+
+
+#         classes_detected = {}
+#         pred = func_output.pred[0]
+
+#         if pred.shape[0]:
+#             for c in pred[:, -1].unique():
+#                 n = (pred[:, -1] == c).sum()  # detections per class
+#                 classes_detected[func_output.names[int(c)]] = int(n)
+
+
+#         print(classes_detected)
+
+#         return_queue.put(classes_detected)
+
+
+# coco128_model_process = multiprocessing.Process(target=ml_inference_wrap, args=("yolov5_weights/yolov5s.pt", coco128_queue, coco128_return_queue))
+# lisa_model_process = multiprocessing.Process(target=ml_inference_wrap, args=("yolov5_weights/trafficsigns.pt", lisa_queue, lisa_return_queue))
+# fire_model_process = multiprocessing.Process(target=ml_inference_wrap, args=("yolov5_weights/fires.pt", fire_queue, fire_return_queue))
+
+# coco128_model_process.start()
+# lisa_model_process.start()
+# fire_model_process.start()
+
+
+# def run_cpu_tasks_in_parallel(tasks, args):
+#     process_args = []
+#     for index, task in enumerate(tasks):
+#         process_args.append((task, whitelisted_classes, args[index]))
+#     with multiprocessing.Pool(5) as p:
+#         output = p.starmap(ml_inference_wrap, process_args)
+#     return {
+#         key: value
+#         for detected in output
+#         for key, value in detected.items()
+#     }
+
+
 events = []
 
 sign_cascade = cv2.CascadeClassifier("Speed_limit_classifier.xml")
@@ -226,11 +339,13 @@ def interpret_text(recognized_text):
         show_alert(
             f"The speed limit is {match} mph.", f"Slow down to {match} mph.", True
         )
+    return match
 
 
 def check_speed_limit(gray_frame):
     # Scan for speed limits signs
     signs = sign_cascade.detectMultiScale(gray_frame)
+    speed_result = None
     for (x, y, w, h) in signs:
         # img = cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
         roi_gray = gray_frame[y : y + h, x : x + w]
@@ -238,13 +353,22 @@ def check_speed_limit(gray_frame):
         recognized_text = pytesseract.image_to_string(
             roi_gray, config="-c tessedit_char_whitelist=0123456789 --psm 6"
         )
-        interpret_text(recognized_text)
+        speed_result = interpret_text(recognized_text)
+    return speed_result
+
+
+cap = None
 
 
 def end_program():
     communication_socket.send("end".encode())
     communication_socket.close()
-    sys.exit()
+    if cap is not None:
+        cap.release()
+    ser.close()
+
+
+atexit.register(end_program)
 
 
 phone_connected = False
@@ -264,15 +388,15 @@ while not phone_connected and runUi:
         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
             pos = event.pos
             quit_button.check_click(*pos)
-            end_program()
+            sys.exit()
         elif event.type in [pygame.FINGERDOWN, pygame.FINGERUP]:
             pos = (event.x * screen.get_width(), event.y * screen.get_height())
             quit_button.check_click(*pos)
-            end_program()
+            sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == K_q:
                 runUi = False
-                end_program()
+                sys.exit()
 
 alert_level = 1
 show_alert("Drive Safe!", "Thank you for using Row Dan! Drive safe!", True)
@@ -297,27 +421,52 @@ while runUi:
         cv2.imshow("Video Stream", gray_frame)
     cv2.waitKey(1)
 
+    # coco128_queue.put(frame)
+    # lisa_queue.put(gray_frame)
+    # fire_queue.put(frame)
+
     if alert != "Drive Safe!" or not text_to_speech.text_to_speech_running:
+        # results = whitelist_keys(
+        #     whitelisted_classes,
+        #     {
+        #         **coco128_return_queue.get(),
+        #         **lisa_return_queue.get(),
+        #         **fire_return_queue.get()
+        #     }
+        # )
         results = whitelist_keys(
             whitelisted_classes,
             {
                 **get_classes_from_results(model(frame)),
                 **get_classes_from_results(lisa_dataset(gray_frame)),
-                # **get_classes_from_results(fire_dataset(frame)),
+                **get_classes_from_results(fire_model(frame)),
             },
         )
     else:
         results = {}
+
+    distance, strength, temperature = read_tfluna_data()
+
+    if distance < 0.7:
+        results["close_distance"] = 1
     events.append(results)
-    pygame.display.update()
-    screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
-    quit_button.draw()
-    show_text(alert)
+
+    distance_display = medium_font.render(f"An object is: {distance} m away",True,blue)
 
     item_detected = find_events(events, results)
 
     if not item_detected:
-        check_speed_limit(gray_frame)
+        speed_output = check_speed_limit(gray_frame)
+
+    speed_display = medium_font.render(f"Speed Limit: {speed_output}",True,blue)
+
+    screen.blit(distance_display, (300, 100))
+    screen.blit(speed_display, (300, 200))
+
+    pygame.display.update()
+    screen.fill(green if alert_level == 1 else yellow if alert_level == 2 else red)
+    quit_button.draw()
+    show_text(alert)
 
     for event in pygame.event.get():
         if event.type in [pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP]:
@@ -332,6 +481,5 @@ while runUi:
     if len(events) > 200:
         events = events[:-2]
 
-cap.release()
+
 cv2.destroyAllWindows()
-end_program()

@@ -5,7 +5,7 @@ from datetime import date
 from flask import Flask, request, render_template, jsonify
 from flask_pymongo import PyMongo
 from dotenv import load_dotenv
-from geopy.geocoders import Nominatim
+# from geopy.geocoders import Nominatim
 from flask_socketio import SocketIO
 from engineio.payload import Payload
 import tweepy
@@ -13,7 +13,7 @@ import tweepy
 from pluralize import pluralize
 
 
-geolocator = Nominatim(user_agent="RODAN")
+# geolocator = Nominatim(user_agent="RODAN")
 Payload.max_decode_packets = 500
 
 if "DYNO" not in os.environ:
@@ -135,10 +135,12 @@ def get_agg_events(raw=False):
 
 
 def reverse_geocode(latitude, longitude, raw=False):
-    address = geolocator.reverse(f"{latitude}, {longitude}", zoom=18).raw["address"]
+    # address = geolocator.reverse(f"{latitude}, {longitude}", zoom=18).raw["address"]
     if raw:
-        return address
-    return f"{address['town']}, {address['state']} {address['postcode']}"
+        return {"road": "Main Street", "town": "Pleasanton", "postcode": "94566", "county": "Alameda County", "state": "California", "country": "United States"}
+        # return address
+    return "Pleasanton, California 94566"
+    # return f"{address['town']}, {address['state']} {address['postcode']}"
 
 
 @app.context_processor

@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import date
+import datetime
 
 from flask import Flask, request, render_template, jsonify
 from flask_pymongo import PyMongo
@@ -41,7 +42,7 @@ auth = tweepy.Client(
     app.config["ACCESS_TOKEN"],
     app.config["ACCESS_TOKEN_SECRET"],
 )
-api = tweepy.API(auth)
+# api = tweepy.API(auth)
 
 
 @app.route("/")
@@ -93,7 +94,7 @@ def add_event():
     if event["event"] in ["fire", "accident", "pothole", "oversized vehicle"]:
         starting = "An" if event["event"][0] in ["a", "e", "i", "o", "u"] else "A"
         auth.create_tweet(
-            text=f"**THIS IS A TEST MESSAGE** {starting} {event['event']} was detected in {reverse_geocode_output['town']}, {reverse_geocode_output['state']} {reverse_geocode_output['postcode']}"
+            text=f"**THIS IS A TEST MESSAGE** {starting} {event['event']} was detected in {reverse_geocode_output['town']}, {reverse_geocode_output['state']} {reverse_geocode_output['postcode']} {datetime.datetime.now().strftime('%I:%M')}"
         )
     mongo.db.events.insert_one(event)
     socketio.emit("events", get_agg_events(raw=True), broadcast=True)
@@ -168,4 +169,4 @@ def disconnect():
 
 
 if __name__ == "__main__":
-    socketio.run(app)
+    socketio.run(app, debug=True)

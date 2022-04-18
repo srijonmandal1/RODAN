@@ -1,5 +1,5 @@
-# RODAN
-This is the source code for a device that aims to generate alerts and prevent as many road safety issues on the road as possible. This methodology of detecting a wide array of issues and taking actions is what makes our device unique.
+# RODAN Dev Branch
+This branch contains all the testing files for the various hardware components of the device like the LIDAR and thermal camera.
 
-
+Tutorials for setting up LIDAR: https://makersportal.com/blog/distance-detection-with-the-tf-luna-lidar-and-raspberry-pi
 Training Personalized Dataset: https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data
